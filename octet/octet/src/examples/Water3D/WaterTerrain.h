@@ -31,12 +31,7 @@ namespace octet{
     mesh::vertex vertex(
       vec3_in bb_min, vec3_in uv_min, vec3_in uv_delta, vec3_in pos
       ) {
-      static const vec3 bumps[] = {
-        vec3(100, 0, 100), vec3(50, 0, 50), vec3(150, 0, 50)
-      };
-
       float y = 4.0f;
-
       vec3 p = bb_min + pos + vec3(0, y, 0);
       vec3 normal = normalize(vec3(0, 1, 0));
       vec3 uv = uv_min + vec3((float)pos.x(), (float)pos.z(), 0) * uv_delta;
@@ -45,10 +40,10 @@ namespace octet{
   };
 
   struct WaveInfo{
-    std::array<float, 8> amplitude;
-    std::array<float, 8> wave_length;
-    std::array<float, 8> speed;
-    std::array<float, 8> dir_x;
-    std::array<float, 8> dir_y;
+    float amplitude[8];
+    float wave_length[8];
+    float speed[8];
+    float dir_x[8];
+    float dir_y[8];
   };
 }

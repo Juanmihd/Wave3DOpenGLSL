@@ -45,7 +45,8 @@ float wave(int i){
 float waves(){
 	float height = 0;
 
-	height = wave(0);
+	for(int i=0; i<8; ++i)
+		height += wave(i);
 
 	return height;
 }

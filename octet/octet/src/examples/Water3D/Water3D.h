@@ -56,31 +56,34 @@ namespace octet {
       number_waves = 8;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
-      waves_info.amplitude[0] = 1.0f;
-      waves_info.speed[0] = 0.5f;
-      waves_info.wave_length[0] = 2;
-      waves_info.dir_x[0] = 0;
-      waves_info.dir_y[0] = 1;
-      waves_info.amplitude[1] = 1.2f;
-      waves_info.speed[1] = 0.6f;
-      waves_info.wave_length[0] = 2.5f;
-      waves_info.dir_x[1] = 1;
-      waves_info.dir_y[1] = 0;
+      for (int i = 0; i != 8; ++i){
+        waves_info.amplitude[i] = 1.0f + i/8.0f;
+        waves_info.speed[i] = 0.5f+i/16.0f;
+        waves_info.wave_length[i] = 2 + i / 16.0f;
+        waves_info.dir_x[i] = i/8.0f;
+        waves_info.dir_y[i] = 1 - i / 8.0f;
+      }
+
       atom_t atom_amplitude = app_utils::get_atom("_amplitude");
-      uniform_amplitudes = water_material->add_uniform(&waves_info.amplitude, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
+      uniform_amplitudes = water_material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
       atom_t atom_speed = app_utils::get_atom("_speed");
-      uniform_speed = water_material->add_uniform(&waves_info.speed, atom_speed, GL_FLOAT, 8, param::stage_vertex);
+      uniform_speed = water_material->add_uniform(nullptr, atom_speed, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_speed, waves_info.speed, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
       atom_t atom_wave_lenght = app_utils::get_atom("_wave_lenght");
-      uniform_wave_lenght = water_material->add_uniform(&waves_info.wave_length, atom_wave_lenght, GL_FLOAT, 8, param::stage_vertex);
+      uniform_wave_lenght = water_material->add_uniform(nullptr, atom_wave_lenght, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_wave_lenght, waves_info.wave_length, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
       atom_t atom_dir_x = app_utils::get_atom("_dir_x");
-      uniform_dir_x = water_material->add_uniform(&waves_info.dir_x, atom_dir_x, GL_FLOAT, 8, param::stage_vertex);
+      uniform_dir_x = water_material->add_uniform(nullptr, atom_dir_x, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
       atom_t atom_dir_y = app_utils::get_atom("_dir_y");
-      uniform_dir_y = water_material->add_uniform(&waves_info.dir_y, atom_dir_y, GL_FLOAT, 8, param::stage_vertex);
- 
+      uniform_dir_y = water_material->add_uniform(nullptr, atom_dir_y, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+
       //Creating the shape and adding it to the scene
       water_mesh_instance = app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(1000.0f, 0.5f, 1000.0f), ivec3(100, 1, 100), water_source),
+        new mesh_terrain(vec3(1000.0f, 0.5f, 1000.0f), ivec3(150, 1, 150), water_source),
         water_material,
         false, 0
         );
@@ -108,11 +111,10 @@ namespace octet {
 
       mat.loadIdentity();
       mat.translate(0, -0.5f, 0);
-
       
       app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(100, 1, 100), source),
+        new mesh_terrain(vec3(100.0f, 2.5f, 100.0f), ivec3(100, 1, 100), source),
         new material(new image("assets/grass.jpg")),
         false, 0
         );
@@ -144,12 +146,6 @@ namespace octet {
         water_mesh_instance->get_mesh()->set_mode(1);
       }
       else if (is_key_going_down('3')){
-        water_mesh_instance->get_mesh()->set_mode(2);
-      }
-      else if (is_key_going_down('4')){
-        water_mesh_instance->get_mesh()->set_mode(3);
-      }
-      else if (is_key_going_down('5')){
         water_mesh_instance->get_mesh()->set_mode(5);
       }
     }
