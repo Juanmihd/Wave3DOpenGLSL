@@ -55,6 +55,7 @@ namespace octet {
       mat.loadIdentity();
       mat.translate(0, -0.5f, 0);
 
+      
       app_scene->add_shape(
         mat,
         new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(100, 1, 100), source),
