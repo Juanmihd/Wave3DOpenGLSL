@@ -18,9 +18,6 @@ namespace octet {
     ref<visual_scene> app_scene;
 
     mouse_look mouse_look_helper;
-    helper_fps_controller fps_helper;
-
-    ref<scene_node> player_node;
 
     ref<camera_instance> the_camera;
 
@@ -35,6 +32,9 @@ namespace octet {
     ref<param_uniform> uniform_wave_lenght;
     ref<param_uniform> uniform_dir_x;
     ref<param_uniform> uniform_dir_y;
+    ref<param_uniform> uniform_cen_x;
+    ref<param_uniform> uniform_cen_y;
+    ref<param_uniform> uniform_type;
     ref<mesh_instance> water_mesh_instance;
 
     WaveInfo waves_info;
@@ -57,13 +57,17 @@ namespace octet {
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
       for (int i = 0; i != 8; ++i){
-        waves_info.amplitude[i] = 1.0f + i/8.0f;
+        waves_info.amplitude[i] = (1.0f + i/8.0f)*0.5f;
         waves_info.speed[i] = 0.5f+i/16.0f;
         waves_info.wave_length[i] = 2 + i / 16.0f;
         waves_info.dir_x[i] = i/8.0f;
         waves_info.dir_y[i] = 1 - i / 8.0f;
+        waves_info.type[i] = 0;
+        waves_info.cen_x[i] = 2;
+        waves_info.cen_y[i] = 5;
       }
-
+      waves_info.amplitude[7] = 10.0f;
+      waves_info.type[7] = 1;
       atom_t atom_amplitude = app_utils::get_atom("_amplitude");
       uniform_amplitudes = water_material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
@@ -79,11 +83,20 @@ namespace octet {
       atom_t atom_dir_y = app_utils::get_atom("_dir_y");
       uniform_dir_y = water_material->add_uniform(nullptr, atom_dir_y, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      atom_t atom_type= app_utils::get_atom("_type");
+      uniform_type = water_material->add_uniform(nullptr, atom_type, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      atom_t atom_cen_x = app_utils::get_atom("_cen_x");
+      uniform_cen_x = water_material->add_uniform(nullptr, atom_cen_x, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_cen_x, waves_info.cen_x, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      atom_t atom_cen_y = app_utils::get_atom("_cen_y");
+      uniform_cen_y = water_material->add_uniform(nullptr, atom_cen_y, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_cen_y, waves_info.cen_y, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
 
       //Creating the shape and adding it to the scene
       water_mesh_instance = app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(1000.0f, 0.5f, 1000.0f), ivec3(150, 1, 150), water_source),
+        new mesh_terrain(vec3(1000.0f, 0.5f, 1000.0f), ivec3(100, 1, 100), water_source),
         water_material,
         false, 0
         );
@@ -97,11 +110,10 @@ namespace octet {
     /// this is called once OpenGL is initialized
     void app_init() {
       mouse_look_helper.init(this, 200.0f / 360.0f, false);
-      fps_helper.init(this);
       app_scene = new visual_scene();
       app_scene->create_default_camera_and_lights();
       the_camera = app_scene->get_camera_instance(0);
-      the_camera->get_node()->translate(vec3(0, 4, 0));
+      the_camera->get_node()->translate(vec3(0, 40, 0));
       the_camera->set_far_plane(10000);
 
       strating = std::chrono::system_clock::now();
@@ -119,23 +131,9 @@ namespace octet {
         false, 0
         );
 
-      set_up_water(mat);
-
-      float player_height = 1.83f;
-      float player_radius = 0.25f;
-      float player_mass = 90.0f;
-
       mat.loadIdentity();
-      mat.translate(-50, player_height*10.5f, -50);
-
-      mesh_instance *mi = app_scene->add_shape(
-        mat,
-        new mesh_sphere(vec3(0), player_radius),
-        new material(vec4(1, 0, 0, 1)),
-        true, player_mass,
-        new btCapsuleShape(0.25f, player_height)
-        );
-      player_node = mi->get_node();
+      mat.translate(0, -5, 0);
+      set_up_water(mat);
     }
 
     void keyboard(){
@@ -147,6 +145,18 @@ namespace octet {
       }
       else if (is_key_going_down('3')){
         water_mesh_instance->get_mesh()->set_mode(5);
+      }
+      else if (is_key_down('W')){
+        the_camera->get_node()->translate(vec3(0, 0, -5));
+      }
+      else if (is_key_down('S')){
+        the_camera->get_node()->translate(vec3(0, 0, 5));
+      }
+      else if (is_key_down('A')){
+        the_camera->get_node()->translate(vec3(-5, 0, 0));
+      }
+      else if (is_key_down('D')){
+        the_camera->get_node()->translate(vec3(5, 0, 0));
       }
     }
 
@@ -163,7 +173,6 @@ namespace octet {
       mat4t &camera_to_world = camera_node->access_nodeToParent();
       mouse_look_helper.update(camera_to_world);
 
-      fps_helper.update(player_node, camera_node);
 
       //Update time for the vertex shader
       std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
