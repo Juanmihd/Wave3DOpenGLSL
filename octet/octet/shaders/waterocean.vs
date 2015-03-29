@@ -11,6 +11,11 @@ const float pi = 3.14159;
 // uniforms for the waves
 uniform float _time;
 uniform int _number_waves;
+uniform float _amplitude[8];
+uniform float _speed[8];
+uniform float _wave_lenght[8];
+uniform float _dir_x[8];
+uniform float _dir_y[8];
 
 // matrices
 uniform mat4 modelToProjection;
@@ -29,14 +34,14 @@ varying vec4 color_;
 varying vec3 model_pos_;
 varying vec3 camera_pos_;
 
-float wave(){
-	float amplitude = 2;
+float wave(int i){
+	float amplitude = _amplitude[i];
 	float wavelenght = 5;
 	float speed = 1;
 
 	float frequency = 2*pi/wavelenght;
 	float phase = speed * frequency;
-	vec2 direction = vec2(0.5,1);
+	vec2 direction = vec2(0,1);
 	float theta = dot(direction,vec2(pos.x,pos.z));
 	//return amplitude*sin(tetha * frequency + _time * phase);
 	return amplitude*sin(theta * frequency + _time * phase);

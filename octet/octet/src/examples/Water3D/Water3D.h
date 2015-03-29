@@ -30,6 +30,11 @@ namespace octet {
     ref<material> water_material;
     ref<param_uniform> uniform_time;
     ref<param_uniform> uniform_number_waves;
+    ref<param_uniform> uniform_amplitudes;
+    ref<param_uniform> uniform_speed;
+    ref<param_uniform> uniform_wave_lenght;
+    ref<param_uniform> uniform_dir_x;
+    ref<param_uniform> uniform_dir_y;
     ref<mesh_instance> water_mesh_instance;
 
     WaveInfo waves_info;
@@ -50,7 +55,25 @@ namespace octet {
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
       number_waves = 8;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
-
+      //Setting up waves
+      for (int i = 0; i < 8; ++i){
+        waves_info.amplitude[i] = 1.0f + static_cast<float>(i) / 2;
+        waves_info.speed[i] = static_cast<float>(i);
+        waves_info.wave_length[i] = static_cast<float>(i)* 2 + 1;
+        waves_info.dir_x[i] = i / 8.0f;
+        waves_info.dir_y[i] = 1 - (i+2 / 8.0f);
+      }
+      atom_t atom_amplitude = app_utils::get_atom("_amplitude");
+      uniform_amplitudes = water_material->add_uniform(&waves_info.amplitude, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
+      atom_t atom_speed = app_utils::get_atom("_speed");
+      uniform_speed = water_material->add_uniform(&waves_info.speed, atom_speed, GL_FLOAT, 8, param::stage_vertex);
+      atom_t atom_wave_lenght = app_utils::get_atom("_wave_lenght");
+      uniform_wave_lenght = water_material->add_uniform(&waves_info.wave_length, atom_wave_lenght, GL_FLOAT, 8, param::stage_vertex);
+      atom_t atom_dir_x = app_utils::get_atom("_dir_x");
+      uniform_dir_x = water_material->add_uniform(&waves_info.dir_x, atom_dir_x, GL_FLOAT, 8, param::stage_vertex);
+      atom_t atom_dir_y = app_utils::get_atom("_dir_y");
+      uniform_dir_y = water_material->add_uniform(&waves_info.dir_y, atom_dir_y, GL_FLOAT, 8, param::stage_vertex);
+ 
       //Creating the shape and adding it to the scene
       water_mesh_instance = app_scene->add_shape(
         mat,

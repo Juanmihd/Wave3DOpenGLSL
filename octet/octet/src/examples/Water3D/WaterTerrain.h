@@ -48,5 +48,7 @@ namespace octet{
     std::array<float, 8> amplitude;
     std::array<float, 8> wave_length;
     std::array<float, 8> speed;
+    std::array<float, 8> dir_x;
+    std::array<float, 8> dir_y;
   };
 }
