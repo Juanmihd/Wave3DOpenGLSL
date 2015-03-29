@@ -35,7 +35,7 @@ namespace octet{
         vec3(100, 0, 100), vec3(50, 0, 50), vec3(150, 0, 50)
       };
 
-      float y = 3.0f;
+      float y = 4.0f;
 
       vec3 p = bb_min + pos + vec3(0, y, 0);
       vec3 normal = normalize(vec3(0, 1, 0));
