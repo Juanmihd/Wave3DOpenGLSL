@@ -35,36 +35,19 @@ varying vec3 model_pos_;
 varying vec3 camera_pos_;
 
 float wave(int i){
-	float amplitude = _amplitude[i];
-	float wavelenght = 5;
-	float speed = 1;
-
-	float frequency = 2*pi/wavelenght;
-	float phase = speed * frequency;
-	vec2 direction = vec2(0,1);
+	float frequency = 2*pi/_wave_lenght[i];
+	float phase = _speed[i] * frequency;
+	vec2 direction = vec2(_dir_x[i],_dir_y[i]);
 	float theta = dot(direction,vec2(pos.x,pos.z));
-	//return amplitude*sin(tetha * frequency + _time * phase);
-	return amplitude*sin(theta * frequency + _time * phase);
+	return _amplitude[i]*sin(theta * frequency + _time * phase);
 }
 
 float waves(){
-	float amplitude = 2;
-	float wavelenght = 5;
-	float speed = 1;
-	float amplitude2 = 4;
-	float wavelenght2 = 7;
-	float speed2 = 2;
-	
-	float frequency = 2*pi/wavelenght;
-	float frequency2 = 2*pi/wavelenght2;
-	float phase = speed * frequency;
-	float phase2 = speed2 * frequency2;
-	vec2 direction = vec2(0,1);
-	vec2 direction2 = vec2(1,0);
-	float theta = dot(direction,vec2(pos.x,pos.z));
-	float theta2 = dot(direction2,vec2(pos.x,pos.z));
-	//return amplitude*sin(tetha * frequency + _time * phase);
-	return amplitude*sin(theta2 * frequency2 + _time * phase2) + amplitude*sin(theta * frequency + _time * phase);
+	float height = 0;
+
+	height = wave(0);
+
+	return height;
 }
 
 void main() {

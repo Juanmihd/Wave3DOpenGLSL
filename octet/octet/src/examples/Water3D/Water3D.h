@@ -56,13 +56,16 @@ namespace octet {
       number_waves = 8;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
-      for (int i = 0; i < 8; ++i){
-        waves_info.amplitude[i] = 1.0f + static_cast<float>(i) / 2;
-        waves_info.speed[i] = static_cast<float>(i);
-        waves_info.wave_length[i] = static_cast<float>(i)* 2 + 1;
-        waves_info.dir_x[i] = i / 8.0f;
-        waves_info.dir_y[i] = 1 - (i+2 / 8.0f);
-      }
+      waves_info.amplitude[0] = 1.0f;
+      waves_info.speed[0] = 0.5f;
+      waves_info.wave_length[0] = 2;
+      waves_info.dir_x[0] = 0;
+      waves_info.dir_y[0] = 1;
+      waves_info.amplitude[1] = 1.2f;
+      waves_info.speed[1] = 0.6f;
+      waves_info.wave_length[0] = 2.5f;
+      waves_info.dir_x[1] = 1;
+      waves_info.dir_y[1] = 0;
       atom_t atom_amplitude = app_utils::get_atom("_amplitude");
       uniform_amplitudes = water_material->add_uniform(&waves_info.amplitude, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
       atom_t atom_speed = app_utils::get_atom("_speed");
