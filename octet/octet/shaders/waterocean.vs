@@ -10,6 +10,7 @@ const float pi = 3.14159;
 
 // uniforms for the waves
 uniform float _time;
+uniform int _number_waves;
 
 // matrices
 uniform mat4 modelToProjection;

@@ -43,4 +43,10 @@ namespace octet{
       return mesh::vertex(p, normal, uv);
     }
   };
+
+  struct WaveInfo{
+    std::array<float, 8> amplitude;
+    std::array<float, 8> wave_length;
+    std::array<float, 8> speed;
+  };
 }
