@@ -36,20 +36,17 @@ namespace octet {
     ref<param_uniform> uniform_steepness;
     ref<param_uniform> uniform_type;
     ref<mesh_instance> water_mesh_instance;
-
+    ref<scene_node> ball_node;
     WaveInfo waves_info;
 
     std::chrono::time_point<std::chrono::system_clock> strating;
     float time_per_frame;
     int number_waves;
 
-    void set_up_water(const mat4t& mat, bool normals = true){
+    void set_up_water(const mat4t& mat){
       //Setting up parameters of the shader!
       param_shader* water_shader;
-      if (!normals)
-        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
-      else
-        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid_2.fs");
+      water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
       water_material = new material(vec4(0.2f, 0.5f, 1.0f, 1.0f), water_shader);
       //Setting up time
       atom_t atom_my_time = app_utils::get_atom("_time");
@@ -72,14 +69,14 @@ namespace octet {
       waves_info.amplitude[0] = 2.0f/number_waves;
       waves_info.speed[0] = 1.5f;
       waves_info.wave_length[0] = 10.5f;
-      waves_info.dir_x[0] = 200;
-      waves_info.dir_y[0] = 200;
+      waves_info.dir_x[0] = -50;
+      waves_info.dir_y[0] = -50;
       waves_info.dir_x[4] = -100;
       waves_info.dir_y[4] = -100;
       waves_info.type[0] = 1;
       //waves_info.type[4] = 1;
       //Qi = 1/(wi Ai )
-      waves_info.steepness[0] = 0.8f / (waves_info.amplitude[0] * 2.0f*3.141592f / waves_info.wave_length[0]);
+      waves_info.steepness[0] = 0;// 0.8f / (waves_info.amplitude[0] * 2.0f*3.141592f / waves_info.wave_length[0]);
      atom_t atom_amplitude = app_utils::get_atom("_amplitude");
       uniform_amplitudes = water_material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
@@ -168,12 +165,14 @@ namespace octet {
       mat.loadIdentity();
       mat.translate(0, 40, 0);
       set_up_water(mat); 
-      /*
-      set_up_water(mat,true);
+      
      
       mat.loadIdentity();
-      mat.translate(0, 10, 0);
-      app_scene->add_shape(mat, new mesh_sphere(vec3(5, 5, 0), 5), new material(vec4(1, 0, 0, 1)));*/
+      mat.translate(-50, 40, -50);
+
+      ball_node = new scene_node;
+      ball_node->translate(vec3(-50, 45, -50));
+      app_scene->add_mesh_instance(new mesh_instance(ball_node,new mesh_sphere(vec3(0,0,0),5),new material(vec4(1,0,0,1))));
     }
 
     void keyboard(){
@@ -198,6 +197,26 @@ namespace octet {
       else if (is_key_down('D')){
         the_camera->get_node()->translate(vec3(5, 0, 0));
       }
+      else if (is_key_down(key_up)){
+        ball_node->translate(vec3(1, 0, 0));
+        waves_info.dir_x[0] += 1;
+        water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float));
+      }
+      else if (is_key_down(key_down)){
+        ball_node->translate(vec3(-1, 0, 0));
+        waves_info.dir_x[0] -= 1;
+        water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float));
+      }
+      else if (is_key_down(key_left)){
+        ball_node->translate(vec3(0, 0, 1));
+        waves_info.dir_y[0] += 1;
+        water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float));
+      }
+      else if (is_key_down(key_right)){
+        ball_node->translate(vec3(0, 0, -1));
+        waves_info.dir_y[0] -= 1;
+        water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float));
+      }
     }
 
     /// this is called to draw the world
@@ -219,14 +238,12 @@ namespace octet {
       std::chrono::duration<float> elapsed_seconds = now - strating;
       float new_time = elapsed_seconds.count();
       water_material->set_uniform(uniform_time, &new_time, sizeof(new_time));
-
+      ball_node->translate(vec3(0, sin(new_time)*0.1f, 0));
       // update matrices. assume 30 fps.
       app_scene->update(1.0f / 30);
 
       // draw the scene
       app_scene->render((float)vx / vy);
-      scene_node *node = app_scene->get_mesh_instance(0)->get_node();
-      node->rotate(1, vec3(1, 0, 0));
     }
   };
 }

@@ -12,7 +12,7 @@ namespace octet{
 
       float y =
         std::exp((pos - bumps[0]).squared() / (-100.0f)) * 3.0f +
-        std::exp((pos - bumps[1]).squared() / (-100.0f)) * 5.0f +
+        std::exp((pos - bumps[1]).squared() / (-100.0f)) * 30.0f +
         std::exp((pos - bumps[2]).squared() / (-10000.0f)) * (-20.0f) +
         (15.0f)
         ;

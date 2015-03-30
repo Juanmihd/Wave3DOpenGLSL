@@ -39,7 +39,8 @@ vec2 get_direction(int i){
 	if(_type[i] == 0){
 		return normalize(vec2(_dir_x[i],_dir_y[i]));
 	}else{
-		return normalize(vec2(pos.x,pos.z)-vec2(_dir_x[i],_dir_y[i]));
+		vec2 direction = vec2(_dir_x[i],_dir_y[i])-vec2(pos.x,pos.z);
+		return normalize(direction);
 	}
 }
 
