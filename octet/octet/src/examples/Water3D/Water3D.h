@@ -9,6 +9,7 @@
 #include <chrono>
 #include <ctime>
 #include "WaterTerrain.h"
+//#include "mesh_huge_plane.h"
 
 namespace octet {
   /// Scene containing a box with octet.
@@ -32,8 +33,7 @@ namespace octet {
     ref<param_uniform> uniform_wave_lenght;
     ref<param_uniform> uniform_dir_x;
     ref<param_uniform> uniform_dir_y;
-    ref<param_uniform> uniform_cen_x;
-    ref<param_uniform> uniform_cen_y;
+    ref<param_uniform> uniform_steepness;
     ref<param_uniform> uniform_type;
     ref<mesh_instance> water_mesh_instance;
 
@@ -43,33 +43,44 @@ namespace octet {
     float time_per_frame;
     int number_waves;
 
-    void set_up_water(const mat4t& mat){
+    void set_up_water(const mat4t& mat, bool normals = true){
       //Setting up parameters of the shader!
-      param_shader* water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
-      water_material = new material(vec4(0.0f, 0.0f, 1.0f, 1.0f), water_shader);
+      param_shader* water_shader;
+      if (!normals)
+        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
+      else
+        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid_2.fs");
+      water_material = new material(vec4(0.2f, 0.5f, 1.0f, 1.0f), water_shader);
       //Setting up time
       atom_t atom_my_time = app_utils::get_atom("_time");
       float time_value = 0;
       uniform_time = water_material->add_uniform(&time_value, atom_my_time, GL_FLOAT, 1, param::stage_vertex);
       //Setting up time
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
-      number_waves = 1;
+      number_waves = 3;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
       for (int i = 0; i != 8; ++i){
-        waves_info.amplitude[i] = 0.001f;// (1.0f + i / 8.0f)*0.5f;
-        waves_info.speed[i] = 0.5f+i/40.0f;
-        waves_info.wave_length[i] = 2 + i / 50.0f;
-        waves_info.dir_x[i] = i/8.0f;
+        waves_info.amplitude[i] = (1.0f + i / 8.0f)*0.25;
+        waves_info.speed[i] = 0.5f + i / 40.0f;
+        waves_info.wave_length[i] = 6.5f + i / 5.0f;
+        waves_info.dir_x[i] = i / 4.0f;
         waves_info.dir_y[i] = 1 - i / 8.0f;
         waves_info.type[i] = 0;
-        waves_info.cen_x[i] = 12 + i / 2.0f;
-        waves_info.cen_y[i] = 5.0f + i;
+        waves_info.steepness[i] =0.2f;
       }
-      waves_info.amplitude[3] = 1.0f;
-      waves_info.amplitude[0] = 10.0f;
-      waves_info.type[0] = 0;
-      atom_t atom_amplitude = app_utils::get_atom("_amplitude");
+      waves_info.amplitude[0] = 2.0f/number_waves;
+      waves_info.speed[0] = 1.5f;
+      waves_info.wave_length[0] = 10.5f;
+      waves_info.dir_x[0] = 200;
+      waves_info.dir_y[0] = 200;
+      waves_info.dir_x[4] = -100;
+      waves_info.dir_y[4] = -100;
+      waves_info.type[0] = 1;
+      //waves_info.type[4] = 1;
+      //Qi = 1/(wi Ai )
+      waves_info.steepness[0] = 0.8f / (waves_info.amplitude[0] * 2.0f*3.141592f / waves_info.wave_length[0]);
+     atom_t atom_amplitude = app_utils::get_atom("_amplitude");
       uniform_amplitudes = water_material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
       atom_t atom_speed = app_utils::get_atom("_speed");
@@ -84,25 +95,23 @@ namespace octet {
       atom_t atom_dir_y = app_utils::get_atom("_dir_y");
       uniform_dir_y = water_material->add_uniform(nullptr, atom_dir_y, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
-      atom_t atom_type= app_utils::get_atom("_type");
+      atom_t atom_type = app_utils::get_atom("_type");
       uniform_type = water_material->add_uniform(nullptr, atom_type, GL_INT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(int)); //Thanks to Richard Fox for this bit!
-      atom_t atom_cen_x = app_utils::get_atom("_cen_x");
-      uniform_cen_x = water_material->add_uniform(nullptr, atom_cen_x, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_cen_x, waves_info.cen_x, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
-      atom_t atom_cen_y = app_utils::get_atom("_cen_y");
-      uniform_cen_y = water_material->add_uniform(nullptr, atom_cen_y, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_cen_y, waves_info.cen_y, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      atom_t atom_steepness = app_utils::get_atom("_steepness");
+      uniform_steepness = water_material->add_uniform(nullptr, atom_steepness, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
 
       //Creating the shape and adding it to the scene
       water_mesh_instance = app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(1000.0f, 0.5f, 1000.0f), ivec3(140, 1, 140), water_source),
+        new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(180, 1, 180), water_source),
         water_material,
         false, 0
         );
     }
-
+  
+   
   public:
     /// this is called when we construct the class before everything is initialised.
     Water3D(int argc, char **argv) : app(argc, argv) {
@@ -112,6 +121,30 @@ namespace octet {
     void app_init() {
       mouse_look_helper.init(this, 200.0f / 360.0f, false);
       app_scene = new visual_scene();
+      scene_node *node = new scene_node();
+      app_scene->add_child(node);
+      light *_light = new light();
+      light_instance *li = new light_instance();
+      node->translate(vec3(100, 100, 100));
+      node->rotate(45, vec3(1, 0, 0));
+      node->rotate(45, vec3(0, 1, 0));
+      _light->set_color(vec4(1, 1, 1, 1));
+      _light->set_kind(atom_directional);
+      li->set_node(node);
+      li->set_light(_light);
+      app_scene->add_light_instance(li);
+      node = new scene_node();
+      app_scene->add_child(node);
+      _light = new light();
+      li = new light_instance();
+      node->translate(vec3(-100, 100, -100));
+      node->rotate(-45, vec3(1, 0, 0));
+      node->rotate(45, vec3(0, 1, 0));
+      _light->set_color(vec4(1, 1, 1, 1));
+      _light->set_kind(atom_directional);
+      li->set_node(node);
+      li->set_light(_light);
+      app_scene->add_light_instance(li);
       app_scene->create_default_camera_and_lights();
       the_camera = app_scene->get_camera_instance(0);
       the_camera->get_node()->translate(vec3(0, 40, 0));
@@ -123,18 +156,24 @@ namespace octet {
       mat4t mat;
 
       mat.loadIdentity();
-      mat.translate(0, -0.5f, 0);
+      mat.translate(0, 0, 0);
       
       app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(100.0f, 2.5f, 100.0f), ivec3(100, 1, 100), source),
+        new mesh_terrain(vec3(100.0f, 2.5f, 100.0f), ivec3(180, 1, 180), source),
         new material(new image("assets/grass.jpg")),
         false, 0
         );
-
+      
       mat.loadIdentity();
-      mat.translate(0, +5, 0);
-      set_up_water(mat);
+      mat.translate(0, 40, 0);
+      set_up_water(mat); 
+      /*
+      set_up_water(mat,true);
+     
+      mat.loadIdentity();
+      mat.translate(0, 10, 0);
+      app_scene->add_shape(mat, new mesh_sphere(vec3(5, 5, 0), 5), new material(vec4(1, 0, 0, 1)));*/
     }
 
     void keyboard(){
@@ -185,7 +224,9 @@ namespace octet {
       app_scene->update(1.0f / 30);
 
       // draw the scene
-      app_scene->render((float)vx / vy); 
+      app_scene->render((float)vx / vy);
+      scene_node *node = app_scene->get_mesh_instance(0)->get_node();
+      node->rotate(1, vec3(1, 0, 0));
     }
   };
 }
