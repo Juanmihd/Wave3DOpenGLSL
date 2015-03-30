@@ -37,44 +37,50 @@ varying vec3 model_pos_;
 varying vec3 camera_pos_;
 
 
-float wave(int i){
+vec3 wave(int i){
 	vec2 dir = vec2(_dir_x[i],_dir_y[i]);
 	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
+	float steepness = 1.5;
 	float theta = dot(normalize(dir),vec2(pos.x,pos.z));
 	float mysin = sin(theta * frequency + _time * phase);
-	return 2*mysin;
+	float mycos = cos(theta * frequency + _time * phase);
+	return vec3(dir.x*steepness*_amplitude[i]*mycos,_amplitude[i]*mysin,dir.y*steepness*_amplitude[i]*mycos);
 }
 
-float waves(){
-	float height = 0;
+vec3 waves(){
+	vec3 height = vec3(0,0,0);
 	for(int i=0; i<_number_waves; ++i)
 		height += wave(i);
 	return height;
 }
 
-vec2 getdxy(int i){
+vec3 get_dxyz(int i){
 	vec2 dir = vec2(_dir_x[i],_dir_y[i]);
 	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
+	float steepness = 1.5;
 	float theta = dot(normalize(dir),vec2(pos.x,pos.z));
 	float mycos = cos(theta * frequency + _time * phase);
+	float mysin = cos(theta * frequency + _time * phase);
 	float dx = _amplitude[i] * dir.x * frequency * mycos;
 	float dy = _amplitude[i] * dir.y * frequency * mycos;
-	return vec2(dx,dy);
+	float dheight = steepness * _amplitude[i] * frequency * mysin;
+	return vec3(dx,dheight,dy);
 }
 
 vec3 waves_normal(){
-	vec2 dxy = vec2(0.0,0.0);
+	vec3 dxy = vec3(0.0,0.0,0.0);
 	for(int i=0; i<_number_waves; ++i){
-		dxy += getdxy(i);
+		dxy += get_dxyz(i);
 	}
-	vec3 tnormal = vec3(-dxy.x, 1.0, -dxy.y);
+	vec3 tnormal = vec3(-dxy.x, 1-dxy.y, -dxy.z);
 	return tnormal;
 }
 
 void main() {
-  vec4 temppos = vec4(pos.x, waves(), pos.z, pos.w);
+  vec3 mywave = waves();
+  vec4 temppos = vec4(pos.x+mywave.x, mywave.y, pos.z+mywave.z, pos.w);
   gl_Position = modelToProjection * temppos;
   vec3 tnormal = waves_normal();
   vec3 tpos = (modelToCamera * temppos).xyz;
