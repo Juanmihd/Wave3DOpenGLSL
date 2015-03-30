@@ -45,7 +45,7 @@ namespace octet {
 
     void set_up_water(const mat4t& mat){
       //Setting up parameters of the shader!
-      param_shader* water_shader = new param_shader("shaders/waterocean.vs", "shaders/default_solid.fs");
+      param_shader* water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
       water_material = new material(vec4(0.0f, 0.0f, 1.0f, 1.0f), water_shader);
       //Setting up time
       atom_t atom_my_time = app_utils::get_atom("_time");
@@ -53,21 +53,22 @@ namespace octet {
       uniform_time = water_material->add_uniform(&time_value, atom_my_time, GL_FLOAT, 1, param::stage_vertex);
       //Setting up time
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
-      number_waves = 8;
+      number_waves = 1;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
       for (int i = 0; i != 8; ++i){
-        waves_info.amplitude[i] = (1.0f + i/8.0f)*0.5f;
-        waves_info.speed[i] = 0.5f+i/16.0f;
-        waves_info.wave_length[i] = 2 + i / 16.0f;
+        waves_info.amplitude[i] = 0.001f;// (1.0f + i / 8.0f)*0.5f;
+        waves_info.speed[i] = 0.5f+i/40.0f;
+        waves_info.wave_length[i] = 2 + i / 50.0f;
         waves_info.dir_x[i] = i/8.0f;
         waves_info.dir_y[i] = 1 - i / 8.0f;
         waves_info.type[i] = 0;
-        waves_info.cen_x[i] = 2;
-        waves_info.cen_y[i] = 5;
+        waves_info.cen_x[i] = 12 + i / 2.0f;
+        waves_info.cen_y[i] = 5.0f + i;
       }
-      waves_info.amplitude[7] = 10.0f;
-      waves_info.type[7] = 1;
+      waves_info.amplitude[3] = 1.0f;
+      waves_info.amplitude[0] = 10.0f;
+      waves_info.type[0] = 0;
       atom_t atom_amplitude = app_utils::get_atom("_amplitude");
       uniform_amplitudes = water_material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
@@ -84,8 +85,8 @@ namespace octet {
       uniform_dir_y = water_material->add_uniform(nullptr, atom_dir_y, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
       atom_t atom_type= app_utils::get_atom("_type");
-      uniform_type = water_material->add_uniform(nullptr, atom_type, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      uniform_type = water_material->add_uniform(nullptr, atom_type, GL_INT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(int)); //Thanks to Richard Fox for this bit!
       atom_t atom_cen_x = app_utils::get_atom("_cen_x");
       uniform_cen_x = water_material->add_uniform(nullptr, atom_cen_x, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_cen_x, waves_info.cen_x, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
@@ -96,7 +97,7 @@ namespace octet {
       //Creating the shape and adding it to the scene
       water_mesh_instance = app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(1000.0f, 0.5f, 1000.0f), ivec3(100, 1, 100), water_source),
+        new mesh_terrain(vec3(1000.0f, 0.5f, 1000.0f), ivec3(140, 1, 140), water_source),
         water_material,
         false, 0
         );
@@ -132,7 +133,7 @@ namespace octet {
         );
 
       mat.loadIdentity();
-      mat.translate(0, -5, 0);
+      mat.translate(0, +5, 0);
       set_up_water(mat);
     }
 
@@ -144,7 +145,7 @@ namespace octet {
         water_mesh_instance->get_mesh()->set_mode(1);
       }
       else if (is_key_going_down('3')){
-        water_mesh_instance->get_mesh()->set_mode(5);
+        water_mesh_instance->get_mesh()->set_mode(4);
       }
       else if (is_key_down('W')){
         the_camera->get_node()->translate(vec3(0, 0, -5));

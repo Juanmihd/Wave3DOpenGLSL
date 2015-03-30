@@ -7,7 +7,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 
 const float pi = 3.14159;
-
 // uniforms for the waves
 uniform float _time;
 uniform int _number_waves;
@@ -16,7 +15,7 @@ uniform float _speed[8];
 uniform float _wave_lenght[8];
 uniform float _dir_x[8];
 uniform float _dir_y[8];
-uniform float _type[8];
+uniform int _type[8];
 uniform float _cen_x[8];
 uniform float _cen_y[8];
 
@@ -37,51 +36,52 @@ varying vec4 color_;
 varying vec3 model_pos_;
 varying vec3 camera_pos_;
 
+
 float wave(int i){
-	float frequency = 2*pi/_wave_lenght[i];
+	vec2 dir = vec2(_dir_x[i],_dir_y[i]);
+	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
-	vec2 direction = vec2(_dir_x[i],_dir_y[i]);
-	float theta = dot(direction,vec2(pos.x,pos.z));
-	float sin = ((sin(theta * frequency + _time * phase)+1)/2);
-	return 2*_amplitude[i]*sin*sin*sin;
+	float theta = dot(normalize(dir),vec2(pos.x,pos.z));
+	float mysin = sin(theta * frequency + _time * phase);
+	return 2*mysin;
 }
 
 float waves(){
 	float height = 0;
-	for(int i=0; i<8; ++i)
+	for(int i=0; i<_number_waves; ++i)
 		height += wave(i);
 	return height;
 }
 
-vec3 wave_normal(int i){
-	float frequency = 2*pi/_wave_lenght[i];
+vec2 getdxy(int i){
+	vec2 dir = vec2(_dir_x[i],_dir_y[i]);
+	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
-	vec2 direction = vec2(_dir_x[i],_dir_y[i]);
-	float theta = dot(direction,vec2(pos.x,pos.z));
-	float cosx = cos(theta * frequency + _time * phase);
-	float cosy = cos(theta * frequency + _time * phase);
-	float sinx = (sin(theta * frequency + _time * phase)+1)/2;
-	float siny = (sin(theta * frequency + _time * phase)+1)/2;
-	float dDx = 3 * _amplitude[i] * direction.x * frequency * cosx * sinx * sinx;
-	float dDy = 3 * _amplitude[i] * direction.y * frequency * cosy * siny * siny;
-	return vec3(-dDx, -dDy, i);
+	float theta = dot(normalize(dir),vec2(pos.x,pos.z));
+	float mycos = cos(theta * frequency + _time * phase);
+	float dx = _amplitude[i] * dir.x * frequency * mycos;
+	float dy = _amplitude[i] * dir.y * frequency * mycos;
+	return vec2(dx,dy);
 }
 
 vec3 waves_normal(){
-	vec3 my_normal = vec3(0,0,0);
-	for(int i=0; i<8; ++i)
-		my_normal += wave_normal(i);
-	return my_normal;
+	vec2 dxy = vec2(0.0,0.0);
+	for(int i=0; i<_number_waves; ++i){
+		dxy += getdxy(i);
+	}
+	vec3 tnormal = vec3(-dxy.x, 1.0, -dxy.y);
+	return tnormal;
 }
 
 void main() {
-  gl_Position = modelToProjection * (pos + vec3(0, waves(), 0));
-  vec3 tnormal = (modelToCamera * vec4(waves_normal(), 0.0)).xyz;
-  vec3 tpos = (modelToCamera * pos).xyz;
+  vec4 temppos = vec4(pos.x, waves(), pos.z, pos.w);
+  gl_Position = modelToProjection * temppos;
+  vec3 tnormal = waves_normal();
+  vec3 tpos = (modelToCamera * temppos).xyz;
   normal_ = tnormal;
   uv_ = uv;
   color_ = color;
   camera_pos_ = tpos;
-  model_pos_ = pos.xyz;
+  model_pos_ = temppos.xyz;
 }
 
