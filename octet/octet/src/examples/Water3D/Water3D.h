@@ -38,6 +38,7 @@ namespace octet {
     ref<mesh_instance> water_mesh_instance;
     ref<scene_node> ball_node;
     WaveInfo waves_info;
+    bool skybox;
 
     std::chrono::time_point<std::chrono::system_clock> strating;
     float time_per_frame;
@@ -46,7 +47,8 @@ namespace octet {
     void set_up_water(const mat4t& mat){
       //Setting up parameters of the shader!
       param_shader* water_shader;
-      water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
+      if (!skybox)
+        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid_2.fs");
       water_material = new material(vec4(0.2f, 0.5f, 1.0f, 1.0f), water_shader);
       //Setting up time
       atom_t atom_my_time = app_utils::get_atom("_time");
@@ -116,6 +118,7 @@ namespace octet {
 
     /// this is called once OpenGL is initialized
     void app_init() {
+      skybox = false;
       mouse_look_helper.init(this, 200.0f / 360.0f, false);
       app_scene = new visual_scene();
       scene_node *node = new scene_node();
@@ -172,7 +175,9 @@ namespace octet {
 
       ball_node = new scene_node;
       ball_node->translate(vec3(-50, 45, -50));
-      app_scene->add_mesh_instance(new mesh_instance(ball_node,new mesh_sphere(vec3(0,0,0),5),new material(vec4(1,0,0,1))));
+      app_scene->add_mesh_instance(new mesh_instance(ball_node, new mesh_sphere(vec3(0, 0, 0), 5), new material(vec4(1, 0, 0, 1))));
+
+      app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_box(vec3(500,500,500)), new material(new image("assets/skybox.gif"))));
     }
 
     void keyboard(){
