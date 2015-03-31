@@ -10,3 +10,8 @@ All the interesting bit of this project is inside the folder shaders, waterocean
 Enjoy!
 
 If you want to know more about me, check my portfolio! http://juanmihd.com
+
+
+
+Joke:
+This is a sinful project... (I'm using SINE to simulate the waves!)
