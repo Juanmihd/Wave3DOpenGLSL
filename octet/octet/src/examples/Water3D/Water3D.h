@@ -56,7 +56,7 @@ namespace octet {
       uniform_time = water_material->add_uniform(&time_value, atom_my_time, GL_FLOAT, 1, param::stage_vertex);
       //Setting up time
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
-      number_waves = 3;
+      number_waves = 1;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
       for (int i = 0; i != 8; ++i){
@@ -206,21 +206,25 @@ namespace octet {
         ball_node->translate(vec3(1, 0, 0));
         waves_info.dir_x[0] += 1;
         water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float));
+        printf("Centro: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
       }
       else if (is_key_down(key_down)){
         ball_node->translate(vec3(-1, 0, 0));
         waves_info.dir_x[0] -= 1;
         water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float));
+        printf("Centro: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
       }
       else if (is_key_down(key_left)){
         ball_node->translate(vec3(0, 0, 1));
         waves_info.dir_y[0] += 1;
         water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float));
+        printf("Centro: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
       }
       else if (is_key_down(key_right)){
         ball_node->translate(vec3(0, 0, -1));
         waves_info.dir_y[0] -= 1;
         water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float));
+        printf("Centro: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
       }
     }
 

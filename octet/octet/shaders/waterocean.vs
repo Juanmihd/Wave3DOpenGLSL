@@ -39,7 +39,7 @@ vec2 get_direction(int i){
 	if(_type[i] == 0){
 		return normalize(vec2(_dir_x[i],_dir_y[i]));
 	}else{
-		vec2 direction = vec2(_dir_x[i],_dir_y[i])-vec2(pos.x,pos.z);
+		vec2 direction = vec2(pos.x,pos.z)-vec2(_dir_x[i],_dir_y[i]);
 		return normalize(direction);
 	}
 }
@@ -49,7 +49,7 @@ vec3 wave(int i){
 	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
 	float steepness = _steepness[i];
-	float theta = dot(normalize(dir),vec2(pos.x,pos.z));
+	float theta = dot(dir,vec2(pos.x,pos.z));
 	float mysin = sin(theta * frequency + _time * phase);
 	float mycos = cos(theta * frequency + _time * phase);
 	return vec3(dir.x*steepness*_amplitude[i]*mycos,_amplitude[i]*mysin,dir.y*steepness*_amplitude[i]*mycos);
