@@ -51,17 +51,17 @@ namespace octet {
       //Setting up parameters of the shader!
       param_shader* water_shader;
       if (!skybox)
-        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid_2.fs");
+        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
       else
         water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
-      water_material = new material(vec4(0.2f, 0.5f, 1.0f, 1.0f), water_shader);
+      water_material = new material(new image("assets/skysphere.gif"),NULL, water_shader);
       //Setting up time
       atom_t atom_my_time = app_utils::get_atom("_time");
       float time_value = 0;
       uniform_time = water_material->add_uniform(&time_value, atom_my_time, GL_FLOAT, 1, param::stage_vertex);
       //Setting up time
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
-      number_waves = 2;
+      number_waves = 8;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
       for (int i = 0; i != 8; ++i){
@@ -77,6 +77,7 @@ namespace octet {
       waves_info.amplitude[0] = 2.0f/number_waves;
       waves_info.speed[0] = 1.5f;
       waves_info.wave_length[0] = 10.5f;
+      waves_info.steepness[0] = 1.0f;
       waves_info.dir_x[0] = 0.0f;
       waves_info.dir_y[0] = 0.0f;
       waves_info.dir_x[1] = 0.0f;
@@ -174,9 +175,6 @@ namespace octet {
         new material(new image("assets/grass.jpg")),
         false, 0
         );
-      mat.loadIdentity();
-      mat.translate(0, 40, 0);
-      set_up_water(mat); 
       
      
       mat.loadIdentity();
@@ -188,6 +186,9 @@ namespace octet {
       
       skysphere_instance = app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_sphere(vec3(0, 0, 0), 500), new material(new image("assets/skysphere.gif"))));
 
+      mat.loadIdentity();
+      mat.translate(0, 40, 0);
+      set_up_water(mat);
      // app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_box(vec3(500,500,500)), new material(new image("assets/skybox.gif"))));
     }
 
@@ -203,6 +204,11 @@ namespace octet {
         ground_instance->set_flags(0);
       }
       else if (is_key_going_down('3')){
+        water_mesh_instance->get_mesh()->set_mode(4);
+        skysphere_instance->set_flags(0);
+        ground_instance->set_flags(0);
+      }
+      else if (is_key_going_down('4')){
         water_mesh_instance->get_mesh()->set_mode(4);
         skysphere_instance->set_flags(mesh_instance::flag_enabled);
         ground_instance->set_flags(mesh_instance::flag_enabled);
@@ -242,6 +248,14 @@ namespace octet {
         waves_info.dir_y[0] -= 1.0f;
         water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float));
         printf("Center: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
+      }
+      else if (is_key_down('R')){
+        waves_info.steepness[0] += 0.1f;
+        water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float));
+      }
+      else if (is_key_down('F')){
+        waves_info.steepness[0] -= 0.1f;
+        water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float));
       }
     }
 

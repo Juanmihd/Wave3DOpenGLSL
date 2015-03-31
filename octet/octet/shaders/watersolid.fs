@@ -1,20 +1,22 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-// default frament shader for solid colours
+// default frament shader for textures
 //
 
 // constant parameters
 uniform vec4 lighting[17];
 uniform int num_lights;
-uniform vec4 diffuse;
+uniform sampler2D diffuse_sampler;
 
 // inputs
-varying vec2 uv_;
 varying vec3 normal_;
 varying vec3 camera_pos_;
+varying vec2 uv_;
 varying vec4 color_;
+varying vec3 model_pos_;
 
 void main() {
+  vec4 diffuse = texture2D(diffuse_sampler, uv_);
   vec3 nnormal = normalize(normal_);
   vec3 npos = camera_pos_;
   vec3 diffuse_light = lighting[0].xyz;
@@ -26,6 +28,6 @@ void main() {
     float diffuse_factor = max(dot(light_direction, nnormal), 0.0);
     diffuse_light += diffuse_factor * light_color;
   }
-  gl_FragColor = vec4(diffuse.xyz * diffuse_light, 1);
+  gl_FragColor = vec4(diffuse.xyz * diffuse_light, 0.6);
 }
 

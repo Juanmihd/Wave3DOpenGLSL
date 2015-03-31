@@ -88,8 +88,8 @@ namespace octet { namespace scene {
 
       if (shader == NULL) {
         shader = new param_shader("shaders/default.vs", "shaders/default_textured.fs");
-        shader->init(params);
       }
+      shader->init(params);
       custom_shader = shader;
     }
 

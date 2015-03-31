@@ -41,7 +41,7 @@ namespace octet { namespace scene {
       vec3 bb_min = bb.get_min();
       vec3 bb_delta = bb.get_half_extent() / dimf * 2.0f;
       vec3 uv_min = vec3(0);
-      vec3 uv_delta = vec3(30.0f/dimf.x(), 30.0f/dimf.z(), 0);
+      vec3 uv_delta = vec3(1.0f/dimf.x(), 1.0f/dimf.z(), 0);
       for (int x = 0; x <= dimensions.x(); ++x) {
         for (int z = 0; z <= dimensions.z(); ++z) {
           vec3 xz = vec3((float)x, 0, (float)z) * bb_delta;
