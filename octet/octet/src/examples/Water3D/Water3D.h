@@ -35,7 +35,10 @@ namespace octet {
     ref<param_uniform> uniform_dir_y;
     ref<param_uniform> uniform_steepness;
     ref<param_uniform> uniform_type;
+    ref<param_uniform> uniform_atenuance;
     ref<mesh_instance> water_mesh_instance;
+    ref<mesh_instance> skysphere_instance;
+    ref<mesh_instance> ground_instance;
     ref<scene_node> ball_node;
     WaveInfo waves_info;
     bool skybox;
@@ -49,6 +52,8 @@ namespace octet {
       param_shader* water_shader;
       if (!skybox)
         water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid_2.fs");
+      else
+        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
       water_material = new material(vec4(0.2f, 0.5f, 1.0f, 1.0f), water_shader);
       //Setting up time
       atom_t atom_my_time = app_utils::get_atom("_time");
@@ -56,7 +61,7 @@ namespace octet {
       uniform_time = water_material->add_uniform(&time_value, atom_my_time, GL_FLOAT, 1, param::stage_vertex);
       //Setting up time
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
-      number_waves = 1;
+      number_waves = 2;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
       for (int i = 0; i != 8; ++i){
@@ -66,16 +71,18 @@ namespace octet {
         waves_info.dir_x[i] = i / 4.0f;
         waves_info.dir_y[i] = 1 - i / 8.0f;
         waves_info.type[i] = 0;
-        waves_info.steepness[i] =0.2f;
+        waves_info.steepness[i] =0.0f;
+        waves_info.atenuance[i] = -1.0f;
       }
       waves_info.amplitude[0] = 2.0f/number_waves;
       waves_info.speed[0] = 1.5f;
       waves_info.wave_length[0] = 10.5f;
-      waves_info.dir_x[0] = -50;
-      waves_info.dir_y[0] = -50;
-      waves_info.dir_x[4] = -100;
-      waves_info.dir_y[4] = -100;
+      waves_info.dir_x[0] = 0.0f;
+      waves_info.dir_y[0] = 0.0f;
+      waves_info.dir_x[1] = 0.0f;
+      waves_info.dir_y[1] = 0.0f;
       waves_info.type[0] = 1;
+      waves_info.type[1] = 1;
       //waves_info.type[4] = 1;
       //Qi = 1/(wi Ai )
       waves_info.steepness[0] = 0;// 0.8f / (waves_info.amplitude[0] * 2.0f*3.141592f / waves_info.wave_length[0]);
@@ -100,11 +107,14 @@ namespace octet {
       atom_t atom_steepness = app_utils::get_atom("_steepness");
       uniform_steepness = water_material->add_uniform(nullptr, atom_steepness, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      atom_t atom_atenuance = app_utils::get_atom("_atenuance");
+      uniform_atenuance = water_material->add_uniform(nullptr, atom_atenuance, GL_FLOAT, 8, param::stage_vertex);
+      water_material->set_uniform(uniform_atenuance, waves_info.atenuance, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
 
       //Creating the shape and adding it to the scene
       water_mesh_instance = app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(180, 1, 180), water_source),
+        new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(200, 1, 200), water_source),
         water_material,
         false, 0
         );
@@ -157,14 +167,13 @@ namespace octet {
 
       mat.loadIdentity();
       mat.translate(0, 0, 0);
-      
-      app_scene->add_shape(
+
+      ground_instance = app_scene->add_shape(
         mat,
         new mesh_terrain(vec3(100.0f, 2.5f, 100.0f), ivec3(180, 1, 180), source),
         new material(new image("assets/grass.jpg")),
         false, 0
         );
-      
       mat.loadIdentity();
       mat.translate(0, 40, 0);
       set_up_water(mat); 
@@ -174,57 +183,65 @@ namespace octet {
       mat.translate(-50, 40, -50);
 
       ball_node = new scene_node;
-      ball_node->translate(vec3(-50, 45, -50));
+      ball_node->translate(vec3(0, 45, 0));
       app_scene->add_mesh_instance(new mesh_instance(ball_node, new mesh_sphere(vec3(0, 0, 0), 5), new material(vec4(1, 0, 0, 1))));
+      
+      skysphere_instance = app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_sphere(vec3(0, 0, 0), 500), new material(new image("assets/skysphere.gif"))));
 
-      app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_box(vec3(500,500,500)), new material(new image("assets/skybox.gif"))));
+     // app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_box(vec3(500,500,500)), new material(new image("assets/skybox.gif"))));
     }
 
     void keyboard(){
       if (is_key_going_down('1')){
         water_mesh_instance->get_mesh()->set_mode(0);
+        skysphere_instance->set_flags(0);
+        ground_instance->set_flags(0);
       }
       else if (is_key_going_down('2')){
         water_mesh_instance->get_mesh()->set_mode(1);
+        skysphere_instance->set_flags(0);
+        ground_instance->set_flags(0);
       }
       else if (is_key_going_down('3')){
         water_mesh_instance->get_mesh()->set_mode(4);
+        skysphere_instance->set_flags(mesh_instance::flag_enabled);
+        ground_instance->set_flags(mesh_instance::flag_enabled);
       }
       else if (is_key_down('W')){
-        the_camera->get_node()->translate(vec3(0, 0, -5));
+        the_camera->get_node()->translate(vec3(0, 0, -1));
       }
       else if (is_key_down('S')){
-        the_camera->get_node()->translate(vec3(0, 0, 5));
+        the_camera->get_node()->translate(vec3(0, 0, 1));
       }
       else if (is_key_down('A')){
-        the_camera->get_node()->translate(vec3(-5, 0, 0));
+        the_camera->get_node()->translate(vec3(-1, 0, 0));
       }
       else if (is_key_down('D')){
-        the_camera->get_node()->translate(vec3(5, 0, 0));
+        the_camera->get_node()->translate(vec3(1, 0, 0));
       }
       else if (is_key_down(key_up)){
         ball_node->translate(vec3(1, 0, 0));
-        waves_info.dir_x[0] += 1;
+        waves_info.dir_x[0] += 1.0f;
         water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float));
-        printf("Centro: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
+        printf("Center: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
       }
       else if (is_key_down(key_down)){
         ball_node->translate(vec3(-1, 0, 0));
-        waves_info.dir_x[0] -= 1;
+        waves_info.dir_x[0] -= 1.0f;
         water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float));
-        printf("Centro: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
+        printf("Center: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
       }
       else if (is_key_down(key_left)){
         ball_node->translate(vec3(0, 0, 1));
-        waves_info.dir_y[0] += 1;
+        waves_info.dir_y[0] += 1.0f;
         water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float));
-        printf("Centro: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
+        printf("Center: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
       }
       else if (is_key_down(key_right)){
         ball_node->translate(vec3(0, 0, -1));
-        waves_info.dir_y[0] -= 1;
+        waves_info.dir_y[0] -= 1.0f;
         water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float));
-        printf("Centro: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
+        printf("Center: x%f, y%f\n", waves_info.dir_x[0], waves_info.dir_y[0]);
       }
     }
 

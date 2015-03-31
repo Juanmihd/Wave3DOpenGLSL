@@ -17,6 +17,7 @@ uniform float _dir_x[8];
 uniform float _dir_y[8];
 uniform int _type[8];
 uniform float _steepness[8];
+uniform float _atenuance[8];
 
 // matrices
 uniform mat4 modelToProjection;
@@ -37,22 +38,39 @@ varying vec3 camera_pos_;
 
 vec2 get_direction(int i){
 	if(_type[i] == 0){
-		return normalize(vec2(_dir_x[i],_dir_y[i]));
+		return vec2(_dir_x[i],_dir_y[i]);
 	}else{
-		vec2 direction = vec2(pos.x,pos.z)-vec2(_dir_x[i],_dir_y[i]);
-		return normalize(direction);
+		vec2 direction = vec2(pos.x-_dir_x[i],pos.z-_dir_y[i]);
+		return direction;
 	}
 }
 
 vec3 wave(int i){
-	vec2 dir = get_direction(i);
+	vec2 odir = get_direction(i);
+	vec2 real_pos = vec2(pos.x,pos.z);
+	float distance = length(odir);
+	float r_amplitude = _amplitude[i];
+	if(_atenuance[i] > 0){
+		if(distance < _atenuance[i]){
+			r_amplitude = _amplitude[i]*(1-distance/_atenuance[i]);
+		}else{
+			r_amplitude = 0;
+		}
+	}
+	vec2 dir = normalize(odir);
 	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
 	float steepness = _steepness[i];
-	float theta = dot(dir,vec2(pos.x,pos.z));
+	float theta = 0;
+	if(_type[i] == 0)
+		theta = dot(dir,real_pos);
+	else if(distance < 1) return vec3(0,0,0);
+	else
+		theta = dot(dir,odir);
 	float mysin = sin(theta * frequency + _time * phase);
 	float mycos = cos(theta * frequency + _time * phase);
-	return vec3(dir.x*steepness*_amplitude[i]*mycos,_amplitude[i]*mysin,dir.y*steepness*_amplitude[i]*mycos);
+	//return vec3(dir.x*steepness*r_amplitude*mycos,r_amplitude*mysin,dir.y*steepness*r_amplitude*mycos);
+	return vec3(dir.x*steepness*r_amplitude*mycos,r_amplitude*mysin,dir.y*steepness*r_amplitude*mycos);
 }
 
 vec3 waves(){
@@ -63,16 +81,32 @@ vec3 waves(){
 }
 
 vec3 get_dxyz(int i){
-	vec2 dir = get_direction(i);
+	vec2 odir = get_direction(i);
+	vec2 dir = normalize(odir);
+	vec2 real_pos = vec2(pos.x,pos.z);
+	float distance = length(odir);
+	float r_amplitude = _amplitude[i];
+	if(_atenuance[i] > 0){
+		if(distance < _atenuance[i])
+			r_amplitude = _amplitude[i]*(1-distance/_atenuance[i]);
+		else
+			r_amplitude = 0;
+	}
+	dir = normalize(dir);
 	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
 	float steepness = _steepness[i];
-	float theta = dot(normalize(dir),vec2(pos.x,pos.z));
+	float theta = 0;
+	if(_type[i] == 0)
+		theta = dot(dir,real_pos);
+	else if(distance < 1) return vec3(0.3,0.3,0.3);
+	else
+		theta = dot(dir,odir);
 	float mycos = cos(theta * frequency + _time * phase);
 	float mysin = cos(theta * frequency + _time * phase);
-	float dx = 2*_amplitude[i] * dir.x * frequency * mycos;
-	float dy = 2*_amplitude[i] * dir.y * frequency * mycos;
-	float dheight = steepness * _amplitude[i] * frequency * mysin;
+	float dx = 2 * r_amplitude * dir.x * frequency * mycos;
+	float dy = 2 * r_amplitude * dir.y * frequency * mycos;
+	float dheight = steepness * r_amplitude * frequency * mysin;
 	return vec3(dx,dheight,dy);
 }
 

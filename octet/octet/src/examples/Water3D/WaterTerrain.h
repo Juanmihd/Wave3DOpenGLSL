@@ -53,5 +53,6 @@ namespace octet{
     float dir_y[8];
     int type[8];
     float steepness[8];
+    float atenuance[8];
   };
 }
