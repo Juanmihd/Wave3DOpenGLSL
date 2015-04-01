@@ -5,7 +5,7 @@
 // This is the file containing the class that contains the application in openGL!
 //
 
-
+#include "..\..\..\open_source\AntTweakBar\include\AntTweakBar.h"
 #include <chrono>
 #include <ctime>
 #include "WaterTerrain.h"
@@ -23,7 +23,10 @@ namespace octet {
     ref<mesh_instance> skysphere_instance;
     ref<mesh_instance> ground_instance;
     
-    //Information regarding the waves and shaders of the waves
+    bool draw_twak_bar;
+    TwBar* ui_main_bar;
+
+    // Information regarding the waves and shaders of the waves
     example_geometry_source source;
     water_geometry_source water_source;
     ref<material> water_material;
@@ -41,27 +44,73 @@ namespace octet {
     WaveInfo waves_info;
     int number_waves;
 
-    //Chrono to check the time to sen it to the shader
+    // Chrono to check the time to sen it to the shader
     std::chrono::time_point<std::chrono::system_clock> starting;
     float time_per_frame;
 
-    //Info to open the file
-    char * file_name;
+    // Info to open the file
+    char* file_name;
+    char* currentChar;
     dynarray<uint8_t> buffer;
-    int size_buffer;
 
+    int read_single_int(){
+      int number = *currentChar - '0';
+      currentChar += 2;
+      return number;
+    }
 
+    float read_float(){
+      float number = 0;
+      int decimals = -1;
+      while (*currentChar != ' '){
+        if (*currentChar == '.'){
+          decimals = 0;
+        }
+        else{
+          number *= 10;
+          number += *currentChar - '0';
+          if (decimals >= 0) ++decimals;
+        }
+        ++currentChar;
+      }
+      ++currentChar;
+      for (int i = 0; i < decimals; ++i)
+        number /= 10;
+      return number;
+    }
+
+    /// @brief This function will read a file. It will load it from the parameter or from the 'default' file if none is given 
     void load_file(char* _file_name = nullptr){
       if (_file_name == nullptr)
         app_utils::get_url(buffer, file_name);
       else
         app_utils::get_url(buffer, _file_name);
 
-      size_buffer = buffer.size();
+      currentChar = (char*)buffer.data();
       //Read number of waves (maximum 8!)
-
+      number_waves = read_single_int();
+      ++currentChar;
       //For each wave, read a line, and input that into thing
-
+      for (int i = 0; i < number_waves; ++i){
+        waves_info.amplitude[i] = read_float();
+        waves_info.speed[i] = read_float();
+        waves_info.wave_length[i] = read_float();
+        waves_info.dir_x[i] = read_float();
+        waves_info.dir_y[i] = read_float();
+        waves_info.type[i] = read_single_int();
+        waves_info.steepness[i] = read_float();
+        waves_info.atenuance[i] = read_float();
+      }
+      //Update shader buffers!     
+      water_material->set_uniform(uniform_number_waves, &number_waves, 1 * sizeof(int)); 
+      water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); 
+      water_material->set_uniform(uniform_speed, waves_info.speed, 8 * sizeof(float));
+      water_material->set_uniform(uniform_wave_lenght, waves_info.wave_length, 8 * sizeof(float)); 
+      water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float)); 
+      water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float)); 
+      water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(int));
+      water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float)); 
+      water_material->set_uniform(uniform_atenuance, waves_info.atenuance, 8 * sizeof(float)); 
     }
 
     void set_up_water(const mat4t& mat){
@@ -77,9 +126,10 @@ namespace octet {
       float time_value = 0;
       uniform_time = water_material->add_uniform(&time_value, atom_my_time, GL_FLOAT, 1, param::stage_vertex);
       //Setting up time
+      number_waves = 8;
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
-      number_waves = 1;
-      uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
+      uniform_number_waves = water_material->add_uniform(nullptr, atom_number_waves, GL_INT, 1, param::stage_vertex);
+      water_material->set_uniform(uniform_number_waves, &number_waves, 1 * sizeof(int)); //Thanks to Richard Fox for this bit!
       //Setting up waves
       for (int i = 0; i != 8; ++i){
         waves_info.amplitude[i] = (1.0f + i / 8.0f)*0.25;
@@ -89,7 +139,7 @@ namespace octet {
         waves_info.dir_y[i] = 1 - i / 8.0f;
         waves_info.type[i] = 0;
         waves_info.steepness[i] =0.0f;
-        waves_info.atenuance[i] = -1.0f;
+        waves_info.atenuance[i] = 0.0f;
       }
       waves_info.amplitude[0] = 2.0f/number_waves;
       waves_info.speed[0] = 1.5f;
@@ -104,7 +154,7 @@ namespace octet {
       //waves_info.type[4] = 1;
       //Qi = 1/(wi Ai )
       waves_info.steepness[0] = 0;// 0.8f / (waves_info.amplitude[0] * 2.0f*3.141592f / waves_info.wave_length[0]);
-     atom_t atom_amplitude = app_utils::get_atom("_amplitude");
+      atom_t atom_amplitude = app_utils::get_atom("_amplitude");
       uniform_amplitudes = water_material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
       atom_t atom_speed = app_utils::get_atom("_speed");
@@ -150,6 +200,11 @@ namespace octet {
 
     /// this is called once OpenGL is initialized
     void app_init() {
+      draw_twak_bar = false;
+      TwInit(TW_OPENGL, NULL);
+      TwWindowSize(200, 500 - 40);
+      ui_main_bar = TwNewBar("My UI Bar");
+
       skybox = false;
       mouse_look_helper.init(this, 200.0f / 360.0f, false);
       app_scene = new visual_scene();
@@ -210,6 +265,7 @@ namespace octet {
       mat.loadIdentity();
       mat.translate(0, 40, 0);
       set_up_water(mat);
+      load_file();
      // app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_box(vec3(500,500,500)), new material(new image("assets/skybox.gif"))));
     }
 
@@ -278,6 +334,9 @@ namespace octet {
         waves_info.steepness[0] -= 0.1f;
         water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float));
       }
+      if (is_key_going_down('0')){
+        draw_twak_bar = !draw_twak_bar;
+      }
     }
 
     /// this is called to draw the world
@@ -306,6 +365,9 @@ namespace octet {
 
       // draw the scene
       app_scene->render((float)vx / vy);
+      // tumble the box  (there is only one mesh instance)
+      if (draw_twak_bar)
+        TwDraw();
     }
   };
 }
