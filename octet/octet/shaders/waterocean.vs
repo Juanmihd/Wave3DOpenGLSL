@@ -50,7 +50,7 @@ vec3 wave(int i){
 	vec2 real_pos = vec2(pos.x,pos.z);
 	float distance = length(odir);
 	float r_amplitude = _amplitude[i];
-	if(_atenuance[i] > 0){
+	if(_atenuance[i] != 0){
 		if(distance < _atenuance[i]){
 			r_amplitude = _amplitude[i]*(1-distance/_atenuance[i]);
 		}else{
@@ -66,7 +66,7 @@ vec3 wave(int i){
 		theta = dot(dir,real_pos);
 	else if(distance < 1) return vec3(0,0,0);
 	else
-		theta = dot(dir,odir);
+		theta = -dot(dir,odir);
 	float mysin = sin(theta * frequency + _time * phase);
 	float mycos = cos(theta * frequency + _time * phase);
 	//return vec3(dir.x*steepness*r_amplitude*mycos,r_amplitude*mysin,dir.y*steepness*r_amplitude*mycos);
@@ -86,7 +86,7 @@ vec3 get_dxyz(int i){
 	vec2 real_pos = vec2(pos.x,pos.z);
 	float distance = length(odir);
 	float r_amplitude = _amplitude[i];
-	if(_atenuance[i] > 0){
+	if(_atenuance[i] != 0){
 		if(distance < _atenuance[i])
 			r_amplitude = _amplitude[i]*(1-distance/_atenuance[i]);
 		else

@@ -1,5 +1,11 @@
+///
+/// Juanmi Huertas
+///
+/// This file contains information about the creation of "terrain" and a "plane" to be modified
+///   to produce wave effects!
 
-
+#ifndef _WATERTERRAIN_H_INCLUDE_
+#define _WATERTERRAIN_H_INCLUDE_
 
 namespace octet{
   struct example_geometry_source : mesh_terrain::geometry_source {
@@ -25,7 +31,6 @@ namespace octet{
       return mesh::vertex(p, normal, uv);
     }
   };
-
 
   struct water_geometry_source : mesh_terrain::geometry_source {
     mesh::vertex vertex(
@@ -56,3 +61,5 @@ namespace octet{
     float atenuance[8];
   };
 }
+
+#endif

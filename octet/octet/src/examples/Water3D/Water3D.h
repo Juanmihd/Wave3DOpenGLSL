@@ -1,30 +1,31 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// (C) Andy Thomason 2012-2014
+// @author Juanmi Huertas
 //
-// Modular Framework for OpenGLES2 rendering on multiple platforms.
+// This is the file containing the class that contains the application in openGL!
 //
 
 
 #include <chrono>
 #include <ctime>
 #include "WaterTerrain.h"
-//#include "mesh_huge_plane.h"
 
 namespace octet {
-  /// Scene containing a box with octet.
+  /// @brief This Water3D class is the application (based in Octet) to produce 3d Waves
   class Water3D : public app {
     enum {_NUM_WAVES = 8};
-    // scene for drawing box
+    // Information to render the scene
+    bool skybox;
     ref<visual_scene> app_scene;
-
     mouse_look mouse_look_helper;
-
     ref<camera_instance> the_camera;
-
+    ref<mesh_instance> water_mesh_instance;
+    ref<mesh_instance> skysphere_instance;
+    ref<mesh_instance> ground_instance;
+    
+    //Information regarding the waves and shaders of the waves
     example_geometry_source source;
     water_geometry_source water_source;
-
     ref<material> water_material;
     ref<param_uniform> uniform_time;
     ref<param_uniform> uniform_number_waves;
@@ -36,16 +37,32 @@ namespace octet {
     ref<param_uniform> uniform_steepness;
     ref<param_uniform> uniform_type;
     ref<param_uniform> uniform_atenuance;
-    ref<mesh_instance> water_mesh_instance;
-    ref<mesh_instance> skysphere_instance;
-    ref<mesh_instance> ground_instance;
     ref<scene_node> ball_node;
     WaveInfo waves_info;
-    bool skybox;
-
-    std::chrono::time_point<std::chrono::system_clock> strating;
-    float time_per_frame;
     int number_waves;
+
+    //Chrono to check the time to sen it to the shader
+    std::chrono::time_point<std::chrono::system_clock> starting;
+    float time_per_frame;
+
+    //Info to open the file
+    char * file_name;
+    dynarray<uint8_t> buffer;
+    int size_buffer;
+
+
+    void load_file(char* _file_name = nullptr){
+      if (_file_name == nullptr)
+        app_utils::get_url(buffer, file_name);
+      else
+        app_utils::get_url(buffer, _file_name);
+
+      size_buffer = buffer.size();
+      //Read number of waves (maximum 8!)
+
+      //For each wave, read a line, and input that into thing
+
+    }
 
     void set_up_water(const mat4t& mat){
       //Setting up parameters of the shader!
@@ -61,7 +78,7 @@ namespace octet {
       uniform_time = water_material->add_uniform(&time_value, atom_my_time, GL_FLOAT, 1, param::stage_vertex);
       //Setting up time
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
-      number_waves = 8;
+      number_waves = 1;
       uniform_number_waves = water_material->add_uniform(&number_waves, atom_number_waves, GL_INT, 1, param::stage_vertex);
       //Setting up waves
       for (int i = 0; i != 8; ++i){
@@ -77,9 +94,9 @@ namespace octet {
       waves_info.amplitude[0] = 2.0f/number_waves;
       waves_info.speed[0] = 1.5f;
       waves_info.wave_length[0] = 10.5f;
-      waves_info.steepness[0] = 1.0f;
-      waves_info.dir_x[0] = 0.0f;
-      waves_info.dir_y[0] = 0.0f;
+      waves_info.steepness[0] = 0.0f;
+      waves_info.dir_x[0] = 50.0f;
+      waves_info.dir_y[0] = 50.0f;
       waves_info.dir_x[1] = 0.0f;
       waves_info.dir_y[1] = 0.0f;
       waves_info.type[0] = 1;
@@ -125,6 +142,10 @@ namespace octet {
   public:
     /// this is called when we construct the class before everything is initialised.
     Water3D(int argc, char **argv) : app(argc, argv) {
+      if (argc == 2)
+        file_name = argv[1];
+      else
+        file_name = "assets/wave3d/wave.conf";
     }
 
     /// this is called once OpenGL is initialized
@@ -161,7 +182,7 @@ namespace octet {
       the_camera->get_node()->translate(vec3(0, 40, 0));
       the_camera->set_far_plane(10000);
 
-      strating = std::chrono::system_clock::now();
+      starting = std::chrono::system_clock::now();
       time_per_frame = 20.0f;
 
       mat4t mat;
@@ -181,7 +202,7 @@ namespace octet {
       mat.translate(-50, 40, -50);
 
       ball_node = new scene_node;
-      ball_node->translate(vec3(0, 45, 0));
+      ball_node->translate(vec3(50, 45, 50));
       app_scene->add_mesh_instance(new mesh_instance(ball_node, new mesh_sphere(vec3(0, 0, 0), 5), new material(vec4(1, 0, 0, 1))));
       
       skysphere_instance = app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_sphere(vec3(0, 0, 0), 500), new material(new image("assets/skysphere.gif"))));
@@ -275,8 +296,9 @@ namespace octet {
 
       //Update time for the vertex shader
       std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-      std::chrono::duration<float> elapsed_seconds = now - strating;
+      std::chrono::duration<float> elapsed_seconds = now - starting;
       float new_time = elapsed_seconds.count();
+      //Check if new_time is close to size of float, and reset the "starting" counter
       water_material->set_uniform(uniform_time, &new_time, sizeof(new_time));
       ball_node->translate(vec3(0, sin(new_time)*0.1f, 0));
       // update matrices. assume 30 fps.
