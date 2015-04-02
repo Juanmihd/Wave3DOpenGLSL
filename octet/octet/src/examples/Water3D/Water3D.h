@@ -6,9 +6,10 @@
 //
 
 #include "..\..\..\open_source\AntTweakBar\include\AntTweakBar.h"
+#include "WaterTerrain.h"
+#include "tweakBarSetUp.h"
 #include <chrono>
 #include <ctime>
-#include "WaterTerrain.h"
 
 namespace octet {
   /// @brief This Water3D class is the application (based in Octet) to produce 3d Waves
@@ -23,7 +24,10 @@ namespace octet {
     ref<mesh_instance> skysphere_instance;
     ref<mesh_instance> ground_instance;
     
+    const char* file_name = "assets/wave3d/wave.conf";
     bool draw_twak_bar;
+    int number_waves;
+    float ball_y;
     TwBar* ui_main_bar;
 
     // Information regarding the waves and shaders of the waves
@@ -42,14 +46,12 @@ namespace octet {
     ref<param_uniform> uniform_atenuance;
     ref<scene_node> ball_node;
     WaveInfo waves_info;
-    int number_waves;
 
     // Chrono to check the time to sen it to the shader
     std::chrono::time_point<std::chrono::system_clock> starting;
     float time_per_frame;
 
     // Info to open the file
-    char* file_name;
     char* currentChar;
     dynarray<uint8_t> buffer;
 
@@ -79,12 +81,26 @@ namespace octet {
       return number;
     }
 
+    void update_waves_uniforms(){
+      water_material->set_uniform(uniform_number_waves, &number_waves, 1 * sizeof(int));
+      water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float));
+      water_material->set_uniform(uniform_speed, waves_info.speed, 8 * sizeof(float));
+      water_material->set_uniform(uniform_wave_lenght, waves_info.wave_length, 8 * sizeof(float));
+      water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float));
+      water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float));
+      water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(int));
+      water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float));
+      water_material->set_uniform(uniform_atenuance, waves_info.atenuance, 8 * sizeof(float));
+      ball_node->loadIdentity();
+      ball_node->translate(vec3(waves_info.dir_x[0], ball_y, waves_info.dir_y[0]));
+    }
+
     /// @brief This function will read a file. It will load it from the parameter or from the 'default' file if none is given 
     void load_file(char* _file_name = nullptr){
       if (_file_name == nullptr)
         app_utils::get_url(buffer, file_name);
       else
-        app_utils::get_url(buffer, _file_name);
+        app_utils::get_url(buffer, file_name);
 
       currentChar = (char*)buffer.data();
       //Read number of waves (maximum 8!)
@@ -97,20 +113,12 @@ namespace octet {
         waves_info.wave_length[i] = read_float();
         waves_info.dir_x[i] = read_float();
         waves_info.dir_y[i] = read_float();
-        waves_info.type[i] = read_single_int();
         waves_info.steepness[i] = read_float();
+        waves_info.type[i] = read_single_int();
         waves_info.atenuance[i] = read_float();
       }
       //Update shader buffers!     
-      water_material->set_uniform(uniform_number_waves, &number_waves, 1 * sizeof(int)); 
-      water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); 
-      water_material->set_uniform(uniform_speed, waves_info.speed, 8 * sizeof(float));
-      water_material->set_uniform(uniform_wave_lenght, waves_info.wave_length, 8 * sizeof(float)); 
-      water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float)); 
-      water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float)); 
-      water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(int));
-      water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float)); 
-      water_material->set_uniform(uniform_atenuance, waves_info.atenuance, 8 * sizeof(float)); 
+      update_waves_uniforms();
     }
 
     void set_up_water(const mat4t& mat){
@@ -130,30 +138,18 @@ namespace octet {
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
       uniform_number_waves = water_material->add_uniform(nullptr, atom_number_waves, GL_INT, 1, param::stage_vertex);
       water_material->set_uniform(uniform_number_waves, &number_waves, 1 * sizeof(int)); //Thanks to Richard Fox for this bit!
-      //Setting up waves
+      //Zero value for waves
       for (int i = 0; i != 8; ++i){
-        waves_info.amplitude[i] = (1.0f + i / 8.0f)*0.25;
-        waves_info.speed[i] = 0.5f + i / 40.0f;
-        waves_info.wave_length[i] = 6.5f + i / 5.0f;
-        waves_info.dir_x[i] = i / 4.0f;
-        waves_info.dir_y[i] = 1 - i / 8.0f;
+        waves_info.amplitude[i] = 0.1f;
+        waves_info.speed[i] = 0.1f;
+        waves_info.wave_length[i] = 10.1f;
+        waves_info.dir_x[i] = 10.0f;
+        waves_info.dir_y[i] = 10.0f;
         waves_info.type[i] = 0;
-        waves_info.steepness[i] =0.0f;
+        waves_info.steepness[i] = 0.0f;
         waves_info.atenuance[i] = 0.0f;
       }
-      waves_info.amplitude[0] = 2.0f/number_waves;
-      waves_info.speed[0] = 1.5f;
-      waves_info.wave_length[0] = 10.5f;
-      waves_info.steepness[0] = 0.0f;
-      waves_info.dir_x[0] = 50.0f;
-      waves_info.dir_y[0] = 50.0f;
-      waves_info.dir_x[1] = 0.0f;
-      waves_info.dir_y[1] = 0.0f;
-      waves_info.type[0] = 1;
-      waves_info.type[1] = 1;
-      //waves_info.type[4] = 1;
       //Qi = 1/(wi Ai )
-      waves_info.steepness[0] = 0;// 0.8f / (waves_info.amplitude[0] * 2.0f*3.141592f / waves_info.wave_length[0]);
       atom_t atom_amplitude = app_utils::get_atom("_amplitude");
       uniform_amplitudes = water_material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
       water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
@@ -182,7 +178,7 @@ namespace octet {
       //Creating the shape and adding it to the scene
       water_mesh_instance = app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(200, 1, 200), water_source),
+        new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(400, 1, 400), water_source),
         water_material,
         false, 0
         );
@@ -192,18 +188,20 @@ namespace octet {
   public:
     /// this is called when we construct the class before everything is initialised.
     Water3D(int argc, char **argv) : app(argc, argv) {
-      if (argc == 2)
-        file_name = argv[1];
-      else
-        file_name = "assets/wave3d/wave.conf";
     }
 
     /// this is called once OpenGL is initialized
     void app_init() {
+      ball_y = 45;
+      //Information for the Twak Bar
       draw_twak_bar = false;
       TwInit(TW_OPENGL, NULL);
-      TwWindowSize(200, 500 - 40);
-      ui_main_bar = TwNewBar("My UI Bar");
+      ui_main_bar = TwNewBar("Waves");
+      TwDefine(" Waves label='Waves config' color='216 20 35'  ");
+      TwAddVarRW(ui_main_bar, "Number of waves", TW_TYPE_INT32, &number_waves, 
+        " min=0 max=8 step=1 help='Number of waves to draw.' "); 
+      
+      set_up_tweak_bar(ui_main_bar, waves_info);
 
       skybox = false;
       mouse_look_helper.init(this, 200.0f / 360.0f, false);
@@ -266,7 +264,6 @@ namespace octet {
       mat.translate(0, 40, 0);
       set_up_water(mat);
       load_file();
-     // app_scene->add_mesh_instance(new mesh_instance(new scene_node, new mesh_box(vec3(500,500,500)), new material(new image("assets/skybox.gif"))));
     }
 
     void keyboard(){
@@ -339,6 +336,44 @@ namespace octet {
       }
     }
 
+    void mouseinput(){
+      //mouse control using x and y pos of mouse
+      int x = 0;
+      int y = 0;
+      get_mouse_pos(x, y);
+      //AntTweakBar stuff
+      TwMouseMotion(x, y);
+      if (is_key_going_down(key_lmb))
+      {
+        TwMouseButton(TW_MOUSE_PRESSED, TW_MOUSE_LEFT);
+        //Update shader buffers!     
+        update_waves_uniforms();
+      }
+      if (is_key_down(key_lmb)){
+        //Update shader buffers!     
+        update_waves_uniforms();
+      }
+      //NEED THIS
+      if (!is_key_down(key_lmb) && get_prev_keys()[key_lmb] != 0)
+      {
+        TwMouseButton(TW_MOUSE_RELEASED, TW_MOUSE_LEFT);
+        //Update shader buffers!     
+        update_waves_uniforms();
+      }
+      //AntTweakBar stuff end
+      if (is_key_down(key_rmb)){
+        //Things for the camera
+        scene_node *camera_node = the_camera->get_node();
+        mat4t &camera_to_world = camera_node->access_nodeToParent();
+        mouse_look_helper.update(camera_to_world);
+      }
+      else if (is_key_going_up(key_rmb)){
+        int rx = 0, ry = 0;
+        get_absolute_mouse_movement(rx, ry);
+        mouse_look_helper.set_mouse_center(rx, ry);
+      }
+    }
+
     /// this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
       //Get input from keyboard!
@@ -346,11 +381,9 @@ namespace octet {
 
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
+      TwWindowSize(vx, vy);
       app_scene->begin_render(vx, vy);
-      //Things for the camera
-      scene_node *camera_node = the_camera->get_node();
-      mat4t &camera_to_world = camera_node->access_nodeToParent();
-      mouse_look_helper.update(camera_to_world);
+      mouseinput();
 
 
       //Update time for the vertex shader
@@ -359,6 +392,7 @@ namespace octet {
       float new_time = elapsed_seconds.count();
       //Check if new_time is close to size of float, and reset the "starting" counter
       water_material->set_uniform(uniform_time, &new_time, sizeof(new_time));
+      ball_y += sin(new_time)*0.1f;
       ball_node->translate(vec3(0, sin(new_time)*0.1f, 0));
       // update matrices. assume 30 fps.
       app_scene->update(1.0f / 30);

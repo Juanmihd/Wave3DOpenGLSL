@@ -50,12 +50,11 @@ vec3 wave(int i){
 	vec2 real_pos = vec2(pos.x,pos.z);
 	float distance = length(odir);
 	float r_amplitude = _amplitude[i];
-	if(_atenuance[i] != 0){
-		if(distance < _atenuance[i]){
+	if(_atenuance[i] != 0.0 && _type[i] == 1){
+		if(distance < _atenuance[i])
 			r_amplitude = _amplitude[i]*(1-distance/_atenuance[i]);
-		}else{
+		else
 			r_amplitude = 0;
-		}
 	}
 	vec2 dir = normalize(odir);
 	float frequency = 2.0*pi/_wave_lenght[i];
@@ -86,7 +85,7 @@ vec3 get_dxyz(int i){
 	vec2 real_pos = vec2(pos.x,pos.z);
 	float distance = length(odir);
 	float r_amplitude = _amplitude[i];
-	if(_atenuance[i] != 0){
+	if(_atenuance[i] != 0.0 && _type[i] == 1){
 		if(distance < _atenuance[i])
 			r_amplitude = _amplitude[i]*(1-distance/_atenuance[i]);
 		else

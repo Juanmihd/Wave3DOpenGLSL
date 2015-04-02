@@ -429,6 +429,7 @@
     </ClInclude>
     <ClInclude Include="Water3D.h" />
     <ClInclude Include="WaterTerrain.h" />
+    <ClInclude Include="tweakBarSetUp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl">

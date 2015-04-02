@@ -74,14 +74,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar\lib;C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar\include;C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar\lib;C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar\include;C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar\lib;C:\MyProjects\Waves3D\octet\octet\open_source\AntTweakBar;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -217,6 +217,7 @@
     <ClInclude Include="..\..\shaders\shader.h" />
     <ClInclude Include="..\..\shaders\shaders.h" />
     <ClInclude Include="..\..\shaders\texture_shader.h" />
+    <ClInclude Include="tweakBarSetUp.h" />
     <ClInclude Include="Water3D.h" />
     <ClInclude Include="WaterTerrain.h" />
   </ItemGroup>
