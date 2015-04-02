@@ -138,7 +138,6 @@ void main() {
   vec4 temppos = vec4(pos.x+mywave.x,  mywave.y, pos.z+mywave.z, pos.w);
   gl_Position = modelToProjection * temppos;
   vec3 tnormal = (modelToCamera * vec4(waves_normal(),0.0)).xyz;
-
   vec3 tpos = (modelToCamera * temppos).xyz;
   normal_ = tnormal;
   uv_ = uv;
