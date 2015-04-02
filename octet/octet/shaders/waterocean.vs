@@ -38,6 +38,7 @@ varying vec4 color_;
 varying vec3 model_pos_;
 varying vec3 camera_pos_;
 
+// This function obtains the direction (depending if its a circular o non circular wave)
 vec2 get_direction(int i){
 	if(_type[i] == 0){
 		return vec2(_dir_x[i],_dir_y[i]);
@@ -52,12 +53,14 @@ vec3 wave(int i){
 	vec2 real_pos = vec2(pos.x,pos.z);
 	float distance = length(odir);
 	float r_amplitude = _amplitude[i];
+	// Depending on the atenuance and if its circular or not reduce the wave intensity
 	if(_atenuance[i] != 0.0 && _type[i] == 1){
 		if(distance < _atenuance[i])
 			r_amplitude = _amplitude[i]*(1-distance/_atenuance[i]);
 		else
 			r_amplitude = 0;
 	}
+	//if the floor is rendered, reduce the amplitude
 	if(_ground == 1){
 	  if(pos.y > 10) r_amplitude = 0;
 	  else if(pos.y > 5) r_amplitude = r_amplitude*((10-pos.y)/5.0);
@@ -67,14 +70,15 @@ vec3 wave(int i){
 	float phase = _speed[i] * frequency;
 	float steepness = _steepness[i];
 	float theta = 0;
+	//Depending if its circular or not, solve the direction
 	if(_type[i] == 0)
 		theta = dot(dir,real_pos);
 	else if(distance < 1) return vec3(0,0,0);
 	else
-		theta = -dot(dir,odir);
+		theta = dot(dir,odir);
 	float mysin = sin(theta * frequency + _time * phase);
 	float mycos = cos(theta * frequency + _time * phase);
-	//return vec3(dir.x*steepness*r_amplitude*mycos,r_amplitude*mysin,dir.y*steepness*r_amplitude*mycos);
+	//Return the height!
 	return vec3(dir.x*steepness*r_amplitude*mycos,r_amplitude*mysin,dir.y*steepness*r_amplitude*mycos);
 }
 

@@ -69,6 +69,11 @@ namespace octet {
     float read_float(){
       float number = 0;
       int decimals = -1;
+      int negative = 1;
+      if (*currentChar == '-'){
+        negative = -1;
+        ++currentChar;
+      }
       while (*currentChar != ' '){
         if (*currentChar == '.'){
           decimals = 0;
@@ -83,7 +88,7 @@ namespace octet {
       ++currentChar;
       for (int i = 0; i < decimals; ++i)
         number /= 10;
-      return number;
+      return number*negative;
     }
 
     void update_waves_uniforms(){
@@ -121,6 +126,8 @@ namespace octet {
         waves_info.steepness[i] = read_float();
         waves_info.type[i] = read_single_int();
         waves_info.atenuance[i] = read_float();
+        ++currentChar;
+        ++currentChar;
       }
       //Update shader buffers!     
       update_waves_uniforms();
@@ -149,11 +156,14 @@ namespace octet {
     void set_up_water(const mat4t& mat){
       //Setting up parameters of the shader!
       param_shader* water_shader;
-      if (!skybox)
+      if (true){
         water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
-      else
-        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid.fs");
-      water_material = new material(new image("assets/skysphere.gif"),NULL, water_shader);
+        water_material = new material(new image("assets/skysphere.gif"), NULL, water_shader);
+      }
+      else{
+        water_shader = new param_shader("shaders/waterocean.vs", "shaders/watersolid_2.fs");
+        water_material = new material(vec4(0.25f,0.25f,0.25f), water_shader);
+      }
       //Setting up time
       atom_t atom_my_time = app_utils::get_atom("_time");
       float time_value = 0;
@@ -426,6 +436,9 @@ namespace octet {
         update_waves_uniforms();
       }
       //AntTweakBar stuff end
+      if (is_key_going_down(key_rmb)){
+        clear_absolute_mouse_movement();
+      }
       if (is_key_down(key_rmb)){
         //Things for the camera
         scene_node *camera_node = the_camera->get_node();

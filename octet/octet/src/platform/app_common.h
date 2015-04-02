@@ -203,6 +203,11 @@ namespace octet {
       y = mouse_abs_y;
     }
 
+    void clear_absolute_mouse_movement() {
+      mouse_abs_x = 0;
+      mouse_abs_y = 0;
+    }
+
     // used by the platform to set mouse wheel clicks
     void set_mouse_wheel(int z) {
       mouse_wheel = z;
