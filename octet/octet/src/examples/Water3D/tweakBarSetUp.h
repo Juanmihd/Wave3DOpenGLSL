@@ -38,6 +38,23 @@ namespace octet{
     TwAddVarRW(ui_main_bar, "Atenuance2", TW_TYPE_FLOAT, &waves_info.atenuance[1],
       " label='Atenuance' group='Wave 2' min=0.0 max=100.0 step=2.0 help='This is the wave currently editing' ");
     //Wave 3
+    TwAddVarRW(ui_main_bar, "Type3", TW_TYPE_INT32, &waves_info.type[2],
+      " label='Type of wave' group='Wave 3' min=0 max=1 step=1 help='0 circular, 1 linear' ");
+    TwAddVarRW(ui_main_bar, "Amplitude3", TW_TYPE_FLOAT, &waves_info.amplitude[2],
+      " label='Amplitude' group='Wave 3' min=0.1 max=10.0 step=0.1 help='This is the wave currently editing' ");
+    TwAddVarRW(ui_main_bar, "length3", TW_TYPE_FLOAT, &waves_info.wave_length[2],
+      " label='Wave length' group='Wave 3' min=0.01 max=50.0 step=0.01 help='This is the wave currently editing' ");
+    TwAddVarRW(ui_main_bar, "Speed3", TW_TYPE_FLOAT, &waves_info.speed[2],
+      " label='Speed' group='Wave 3' min=-5.0 max=5.0 step=0.1 help='This is the wave currently editing' ");
+    TwAddVarRW(ui_main_bar, "Dirx3", TW_TYPE_FLOAT, &waves_info.dir_x[2],
+      " label='Dir x (or center x)' group='Wave 3' min=-1000.0 max=1000.0 step=0.1 help='This is the wave currently editing' ");
+    TwAddVarRW(ui_main_bar, "Diry3", TW_TYPE_FLOAT, &waves_info.dir_y[2],
+      " label='Dir y (or center y)' group='Wave 3' min=-1000.0 max=1000.0 step=0.1 help='This is the wave currently editing' ");
+    TwAddVarRW(ui_main_bar, "Steepness3", TW_TYPE_FLOAT, &waves_info.steepness[2],
+      " label='Steepness' group='Wave 3' min=-1.0 max=1.0 step=0.1 help='This is the wave currently editing' ");
+    TwAddVarRW(ui_main_bar, "Atenuance3", TW_TYPE_FLOAT, &waves_info.atenuance[2],
+      " label='Atenuance' group='Wave 3' min=0.0 max=100.0 step=2.0 help='This is the wave currently editing' ");
+    //Wave 4
     TwAddVarRW(ui_main_bar, "Type4", TW_TYPE_INT32, &waves_info.type[3],
       " label='Type of wave' group='Wave 4' min=0 max=1 step=1 help='0 circular, 1 linear' ");
     TwAddVarRW(ui_main_bar, "Amplitude4", TW_TYPE_FLOAT, &waves_info.amplitude[3],
@@ -54,7 +71,7 @@ namespace octet{
       " label='Steepness' group='Wave 4' min=-1.0 max=1.0 step=0.1 help='This is the wave currently editing' ");
     TwAddVarRW(ui_main_bar, "Atenuance4", TW_TYPE_FLOAT, &waves_info.atenuance[3],
       " label='Atenuance' group='Wave 4' min=0.0 max=100.0 step=2.0 help='This is the wave currently editing' ");
-    //Wave 4
+    //Wave 5
     TwAddVarRW(ui_main_bar, "Type5", TW_TYPE_INT32, &waves_info.type[4],
       " label='Type of wave' group='Wave 5' min=0 max=1 step=1 help='0 circular, 1 linear' ");
     TwAddVarRW(ui_main_bar, "Amplitude5", TW_TYPE_FLOAT, &waves_info.amplitude[4],
@@ -71,23 +88,6 @@ namespace octet{
       " label='Steepness' group='Wave 5' min=-1.0 max=1.0 step=0.1 help='This is the wave currently editing' ");
     TwAddVarRW(ui_main_bar, "Atenuance5", TW_TYPE_FLOAT, &waves_info.atenuance[4],
       " label='Atenuance' group='Wave 5' min=0.0 max=100.0 step=2.0 help='This is the wave currently editing' ");
-    //Wave 5
-    TwAddVarRW(ui_main_bar, "Type6", TW_TYPE_INT32, &waves_info.type[5],
-      " label='Type of wave' group='Wave 6' min=0 max=1 step=1 help='0 circular, 1 linear' ");
-    TwAddVarRW(ui_main_bar, "Amplitude6", TW_TYPE_FLOAT, &waves_info.amplitude[5],
-      " label='Amplitude' group='Wave 6' min=0.1 max=10.0 step=0.1 help='This is the wave currently editing' ");
-    TwAddVarRW(ui_main_bar, "length6", TW_TYPE_FLOAT, &waves_info.wave_length[5],
-      " label='Wave length' group='Wave 6' min=0.01 max=50.0 step=0.01 help='This is the wave currently editing' ");
-    TwAddVarRW(ui_main_bar, "Speed6", TW_TYPE_FLOAT, &waves_info.speed[5],
-      " label='Speed' group='Wave 6' min=-5.0 max=5.0 step=0.1 help='This is the wave currently editing' ");
-    TwAddVarRW(ui_main_bar, "Dirx6", TW_TYPE_FLOAT, &waves_info.dir_x[5],
-      " label='Dir x (or center x)' group='Wave 6' min=-1000.0 max=1000.0 step=0.1 help='This is the wave currently editing' ");
-    TwAddVarRW(ui_main_bar, "Diry6", TW_TYPE_FLOAT, &waves_info.dir_y[5],
-      " label='Dir y (or center y)' group='Wave 6' min=-1000.0 max=1000.0 step=0.1 help='This is the wave currently editing' ");
-    TwAddVarRW(ui_main_bar, "Steepness6", TW_TYPE_FLOAT, &waves_info.steepness[5],
-      " label='Steepness' group='Wave 6' min=-1.0 max=1.0 step=0.1 help='This is the wave currently editing' ");
-    TwAddVarRW(ui_main_bar, "Atenuance6", TW_TYPE_FLOAT, &waves_info.atenuance[5],
-      " label='Atenuance' group='Wave 6' min=0.0 max=100.0 step=2.0 help='This is the wave currently editing' ");
     //Wave 6
     TwAddVarRW(ui_main_bar, "Type6", TW_TYPE_INT32, &waves_info.type[5],
       " label='Type of wave' group='Wave 6' min=0 max=1 step=1 help='0 circular, 1 linear' ");
@@ -97,7 +97,7 @@ namespace octet{
       " label='Wave length' group='Wave 6' min=0.01 max=50.0 step=0.01 help='This is the wave currently editing' ");
     TwAddVarRW(ui_main_bar, "Speed6", TW_TYPE_FLOAT, &waves_info.speed[5],
       " label='Speed' group='Wave 6' min=-5.0 max=5.0 step=0.1 help='This is the wave currently editing' ");
-    TwAddVarRW(ui_main_bar, "Dirx3", TW_TYPE_FLOAT, &waves_info.dir_x[5],
+    TwAddVarRW(ui_main_bar, "Dirx6", TW_TYPE_FLOAT, &waves_info.dir_x[5],
       " label='Dir x (or center x)' group='Wave 6' min=-1000.0 max=1000.0 step=0.1 help='This is the wave currently editing' ");
     TwAddVarRW(ui_main_bar, "Diry6", TW_TYPE_FLOAT, &waves_info.dir_y[5],
       " label='Dir y (or center y)' group='Wave 6' min=-1000.0 max=1000.0 step=0.1 help='This is the wave currently editing' ");

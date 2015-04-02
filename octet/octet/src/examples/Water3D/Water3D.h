@@ -27,6 +27,7 @@ namespace octet {
     const char* file_name = "assets/wave3d/wave.conf";
     bool draw_twak_bar;
     int number_waves;
+    int ground_rendered;
     float ball_y;
     TwBar* ui_main_bar;
 
@@ -36,6 +37,7 @@ namespace octet {
     ref<material> water_material;
     ref<param_uniform> uniform_time;
     ref<param_uniform> uniform_number_waves;
+    ref<param_uniform> uniform_ground;
     ref<param_uniform> uniform_amplitudes;
     ref<param_uniform> uniform_speed;
     ref<param_uniform> uniform_wave_lenght;
@@ -55,12 +57,15 @@ namespace octet {
     char* currentChar;
     dynarray<uint8_t> buffer;
 
+    /// @brief Auxiliar function to read a single number representing an int
     int read_single_int(){
       int number = *currentChar - '0';
       currentChar += 2;
       return number;
     }
 
+    /// @brief Auxiliar function to read a float from a char*
+    /// To work, this float has to finish with an empty space ' '
     float read_float(){
       float number = 0;
       int decimals = -1;
@@ -121,6 +126,26 @@ namespace octet {
       update_waves_uniforms();
     }
 
+    /// @brief This function helps to write a file with the wave information
+    void save_file(char* _file_name = nullptr){
+      std::ofstream file("wave_export.conf");
+      if (file.is_open()){
+        file << number_waves << "\n";
+        for (int i = 0; i < number_waves; ++i){
+          file << waves_info.amplitude[i] << " ";
+          file << waves_info.speed[i] << " ";
+          file << waves_info.wave_length[i] << " ";
+          file << waves_info.dir_x[i] << " ";
+          file << waves_info.dir_y[i] << " ";
+          file << waves_info.steepness[i] << " ";
+          file << waves_info.type[i] << " ";
+          file << waves_info.atenuance[i] << " \n";
+        }
+        file.close();
+      }
+    }
+
+    /// @brief This function sets up the shaders for the water
     void set_up_water(const mat4t& mat){
       //Setting up parameters of the shader!
       param_shader* water_shader;
@@ -137,7 +162,7 @@ namespace octet {
       number_waves = 8;
       atom_t atom_number_waves = app_utils::get_atom("_number_waves");
       uniform_number_waves = water_material->add_uniform(nullptr, atom_number_waves, GL_INT, 1, param::stage_vertex);
-      water_material->set_uniform(uniform_number_waves, &number_waves, 1 * sizeof(int)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_number_waves, &number_waves, sizeof(int)); 
       //Zero value for waves
       for (int i = 0; i != 8; ++i){
         waves_info.amplitude[i] = 0.1f;
@@ -149,36 +174,39 @@ namespace octet {
         waves_info.steepness[i] = 0.0f;
         waves_info.atenuance[i] = 0.0f;
       }
-      //Qi = 1/(wi Ai )
+
       atom_t atom_amplitude = app_utils::get_atom("_amplitude");
       uniform_amplitudes = water_material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_amplitudes, waves_info.amplitude, 8 * sizeof(float)); //Thanks to Richard Fox for this line!
       atom_t atom_speed = app_utils::get_atom("_speed");
       uniform_speed = water_material->add_uniform(nullptr, atom_speed, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_speed, waves_info.speed, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_speed, waves_info.speed, 8 * sizeof(float)); 
       atom_t atom_wave_lenght = app_utils::get_atom("_wave_lenght");
       uniform_wave_lenght = water_material->add_uniform(nullptr, atom_wave_lenght, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_wave_lenght, waves_info.wave_length, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_wave_lenght, waves_info.wave_length, 8 * sizeof(float)); 
       atom_t atom_dir_x = app_utils::get_atom("_dir_x");
       uniform_dir_x = water_material->add_uniform(nullptr, atom_dir_x, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_dir_x, waves_info.dir_x, 8 * sizeof(float)); 
       atom_t atom_dir_y = app_utils::get_atom("_dir_y");
       uniform_dir_y = water_material->add_uniform(nullptr, atom_dir_y, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_dir_y, waves_info.dir_y, 8 * sizeof(float)); 
       atom_t atom_type = app_utils::get_atom("_type");
       uniform_type = water_material->add_uniform(nullptr, atom_type, GL_INT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(int)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_type, waves_info.type, 8 * sizeof(int)); 
       atom_t atom_steepness = app_utils::get_atom("_steepness");
       uniform_steepness = water_material->add_uniform(nullptr, atom_steepness, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_steepness, waves_info.steepness, 8 * sizeof(float));
       atom_t atom_atenuance = app_utils::get_atom("_atenuance");
       uniform_atenuance = water_material->add_uniform(nullptr, atom_atenuance, GL_FLOAT, 8, param::stage_vertex);
-      water_material->set_uniform(uniform_atenuance, waves_info.atenuance, 8 * sizeof(float)); //Thanks to Richard Fox for this bit!
+      water_material->set_uniform(uniform_atenuance, waves_info.atenuance, 8 * sizeof(float)); 
+      atom_t atom_ground = app_utils::get_atom("_ground");
+      uniform_ground = water_material->add_uniform(nullptr, atom_ground, GL_INT, 1, param::stage_vertex);
+      water_material->set_uniform(uniform_ground, &ground_rendered, sizeof(int));
 
       //Creating the shape and adding it to the scene
       water_mesh_instance = app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(400, 1, 400), water_source),
+        new mesh_terrain(vec3(100.0f, 0.0f, 100.0f), ivec3(400, 1, 400), source),
         water_material,
         false, 0
         );
@@ -192,6 +220,7 @@ namespace octet {
 
     /// this is called once OpenGL is initialized
     void app_init() {
+      ground_rendered = 1;
       ball_y = 45;
       //Information for the Twak Bar
       draw_twak_bar = false;
@@ -223,8 +252,8 @@ namespace octet {
       _light = new light();
       li = new light_instance();
       node->translate(vec3(-100, 100, -100));
-      node->rotate(-45, vec3(1, 0, 0));
-      node->rotate(45, vec3(0, 1, 0));
+      node->rotate(45, vec3(1, 0, 0));
+      node->rotate(-45, vec3(0, 1, 0));
       _light->set_color(vec4(1, 1, 1, 1));
       _light->set_kind(atom_directional);
       li->set_node(node);
@@ -241,11 +270,11 @@ namespace octet {
       mat4t mat;
 
       mat.loadIdentity();
-      mat.translate(0, 0, 0);
+      mat.translate(0, 30, 0);
 
       ground_instance = app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(100.0f, 2.5f, 100.0f), ivec3(180, 1, 180), source),
+        new mesh_terrain(vec3(100.0f, 0.0f, 100.0f), ivec3(400, 1, 400), source),
         new material(new image("assets/grass.jpg")),
         false, 0
         );
@@ -264,28 +293,61 @@ namespace octet {
       mat.translate(0, 40, 0);
       set_up_water(mat);
       load_file();
+
+      water_mesh_instance->get_mesh()->set_mode(0);
+      skysphere_instance->set_flags(0);
+      if (ground_rendered == 1){
+        ground_instance->set_flags(0);
+        ground_rendered = 0;
+        water_material->set_uniform(uniform_ground, &ground_rendered, sizeof(int));
+      }
     }
 
     void keyboard(){
       if (is_key_going_down('1')){
         water_mesh_instance->get_mesh()->set_mode(0);
         skysphere_instance->set_flags(0);
-        ground_instance->set_flags(0);
+        if (ground_rendered == 1){
+          ground_instance->set_flags(0);
+          ground_rendered = 0;
+          water_material->set_uniform(uniform_ground, &ground_rendered, sizeof(int));
+        }
       }
       else if (is_key_going_down('2')){
         water_mesh_instance->get_mesh()->set_mode(1);
         skysphere_instance->set_flags(0);
-        ground_instance->set_flags(0);
+        if (ground_rendered == 1){
+          ground_instance->set_flags(0);
+          ground_rendered = 0;
+          water_material->set_uniform(uniform_ground, &ground_rendered, sizeof(int));
+        }
       }
       else if (is_key_going_down('3')){
         water_mesh_instance->get_mesh()->set_mode(4);
         skysphere_instance->set_flags(0);
-        ground_instance->set_flags(0);
+        if (ground_rendered == 1){
+          ground_instance->set_flags(0);
+          ground_rendered = 0;
+          water_material->set_uniform(uniform_ground, &ground_rendered, sizeof(int));
+        }
       }
       else if (is_key_going_down('4')){
         water_mesh_instance->get_mesh()->set_mode(4);
         skysphere_instance->set_flags(mesh_instance::flag_enabled);
-        ground_instance->set_flags(mesh_instance::flag_enabled);
+        if (ground_rendered == 1){
+          ground_instance->set_flags(0);
+          ground_rendered = 0;
+          water_material->set_uniform(uniform_ground, &ground_rendered, sizeof(int));
+        }
+      }
+      else if (is_key_going_down('5')){
+        water_mesh_instance->get_mesh()->set_mode(4);
+        skysphere_instance->set_flags(mesh_instance::flag_enabled);
+        if (ground_rendered == 0){
+          ground_instance->set_flags(mesh_instance::flag_enabled);
+          ground_rendered = 1;
+          water_material->set_uniform(uniform_ground, &ground_rendered, sizeof(int));
+        }
       }
       else if (is_key_down('W')){
         the_camera->get_node()->translate(vec3(0, 0, -1));
@@ -333,6 +395,9 @@ namespace octet {
       }
       if (is_key_going_down('0')){
         draw_twak_bar = !draw_twak_bar;
+      }
+      if (is_key_going_down('M')){
+        save_file();
       }
     }
 

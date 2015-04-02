@@ -7,9 +7,11 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 
 const float pi = 3.14159;
+
 // uniforms for the waves
 uniform float _time;
 uniform int _number_waves;
+uniform int _ground;
 uniform float _amplitude[8];
 uniform float _speed[8];
 uniform float _wave_lenght[8];
@@ -56,6 +58,10 @@ vec3 wave(int i){
 		else
 			r_amplitude = 0;
 	}
+	if(_ground == 1){
+	  if(pos.y > 10) r_amplitude = 0;
+	  else if(pos.y > 5) r_amplitude = r_amplitude*((10-pos.y)/5.0);
+	}
 	vec2 dir = normalize(odir);
 	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
@@ -91,6 +97,10 @@ vec3 get_dxyz(int i){
 		else
 			r_amplitude = 0;
 	}
+	if(_ground == 1){
+	  if(pos.y > 10) r_amplitude = 0;
+	  else if(pos.y > 5) r_amplitude = r_amplitude*((10-pos.y)/5.0);
+	}
 	dir = normalize(dir);
 	float frequency = 2.0*pi/_wave_lenght[i];
 	float phase = _speed[i] * frequency;
@@ -119,10 +129,12 @@ vec3 waves_normal(){
 }
 
 void main() {
+  //calculate waves
   vec3 mywave = waves();
   vec4 temppos = vec4(pos.x+mywave.x,  mywave.y, pos.z+mywave.z, pos.w);
   gl_Position = modelToProjection * temppos;
   vec3 tnormal = (modelToCamera * vec4(waves_normal(),0.0)).xyz;
+
   vec3 tpos = (modelToCamera * temppos).xyz;
   normal_ = tnormal;
   uv_ = uv;
